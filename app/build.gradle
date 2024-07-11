@@ -52,8 +52,8 @@ android {
         applicationId "io.stormbird.wallet"
         minSdk 24
         targetSdk 34
-        versionCode 268
-        versionName "3.83"
+        versionCode 269
+        versionName "3.84"
 
         android.buildFeatures.buildConfig true
 
@@ -292,12 +292,15 @@ dependencies {
         exclude group: 'org.bouncycastle', module: '*'
     })
 
+    implementation libs.review
+    implementation libs.app.update
+
     runtimeOnly libs.work.runtime.ktx
 
     //Analytics
-    analyticsImplementation libs.play.core
+    //analyticsImplementation libs.play.core
 
-    analyticsImplementation libs.play.core
+    //analyticsImplementation libs.play.core
     analyticsImplementation libs.firebase.analytics
     analyticsImplementation libs.mixpanel.android
     analyticsImplementation libs.firebase.crashlytics
