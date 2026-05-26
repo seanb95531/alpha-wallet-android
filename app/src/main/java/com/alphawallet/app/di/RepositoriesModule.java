@@ -17,6 +17,7 @@ import com.alphawallet.app.repository.SwapRepositoryType;
 import com.alphawallet.app.repository.TokenLocalSource;
 import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.repository.TokenRepositoryType;
+import com.alphawallet.app.repository.RpcConfigRepository;
 import com.alphawallet.app.repository.TokensMappingRepository;
 import com.alphawallet.app.repository.TokensMappingRepositoryType;
 import com.alphawallet.app.repository.TokensRealmSource;
@@ -28,10 +29,7 @@ import com.alphawallet.app.repository.WalletDataRealmSource;
 import com.alphawallet.app.repository.WalletRepository;
 import com.alphawallet.app.repository.WalletRepositoryType;
 import com.alphawallet.app.service.AccountKeystoreService;
-import com.alphawallet.app.service.AlphaWalletNotificationService;
 import com.alphawallet.app.service.AlphaWalletService;
-import com.alphawallet.app.service.AnalyticsService;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.IPFSService;
@@ -41,6 +39,7 @@ import com.alphawallet.app.service.KeystoreAccountService;
 import com.alphawallet.app.service.NotificationService;
 import com.alphawallet.app.service.OkLinkService;
 import com.alphawallet.app.service.OpenSeaService;
+import com.alphawallet.app.service.RPCRankingManager;
 import com.alphawallet.app.service.RealmManager;
 import com.alphawallet.app.service.SwapService;
 import com.alphawallet.app.service.TickerService;
@@ -199,10 +198,9 @@ public class RepositoriesModule
                                         TokenRepositoryType tokenRepository,
                                         TickerService tickerService,
                                         OpenSeaService openseaService,
-                                        AnalyticsServiceType analyticsService,
                                         OkHttpClient client)
     {
-        return new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, openseaService, analyticsService, client);
+        return new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, openseaService, client);
     }
 
     @Singleton
@@ -269,16 +267,9 @@ public class RepositoriesModule
 
     @Singleton
     @Provides
-    KeyService provideKeyService(@ApplicationContext Context ctx, AnalyticsServiceType analyticsService)
+    KeyService provideKeyService(@ApplicationContext Context ctx)
     {
-        return new KeyService(ctx, analyticsService);
-    }
-
-    @Singleton
-    @Provides
-    AnalyticsServiceType provideAnalyticsService(@ApplicationContext Context ctx, PreferenceRepositoryType preferenceRepository)
-    {
-        return new AnalyticsService(ctx, preferenceRepository);
+        return new KeyService(ctx);
     }
 
     @Singleton
@@ -298,8 +289,16 @@ public class RepositoriesModule
 
     @Singleton
     @Provides
-    AlphaWalletNotificationService provideAlphaWalletNotificationService(WalletRepositoryType walletRepository)
+    RpcConfigRepository provideRpcConfigRepository(@ApplicationContext Context context, OkHttpClient httpClient)
     {
-        return new AlphaWalletNotificationService(walletRepository);
+        return new RpcConfigRepository(context, httpClient);
     }
+
+    @Singleton
+    @Provides
+    RPCRankingManager provideRPCRankingManager(RpcConfigRepository rpcConfigRepository)
+    {
+        return new RPCRankingManager(rpcConfigRepository);
+    }
+
 }

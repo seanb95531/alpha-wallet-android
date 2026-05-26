@@ -34,7 +34,6 @@ import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
 import com.alphawallet.app.repository.SignRecord;
 import com.alphawallet.app.repository.entity.RealmWCSession;
 import com.alphawallet.app.repository.entity.RealmWCSignElement;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
 import com.alphawallet.app.service.RealmManager;
@@ -109,7 +108,6 @@ public class WalletConnectViewModel extends BaseViewModel implements Transaction
                            WalletConnectInteract walletConnectInteract, RealmManager realmManager,
                            GasService gasService,
                            TokensService tokensService,
-                           AnalyticsServiceType analyticsService,
                            EthereumNetworkRepositoryType ethereumNetworkRepository,
                            AWWalletConnectClient awWalletConnectClient
     )
@@ -124,7 +122,6 @@ public class WalletConnectViewModel extends BaseViewModel implements Transaction
         this.gasService = gasService;
         this.tokensService = tokensService;
         this.ethereumNetworkRepository = ethereumNetworkRepository;
-        setAnalyticsService(analyticsService);
         this.awWalletConnectClient = awWalletConnectClient;
         prepareDisposable = null;
         disposable = genericWalletInteract

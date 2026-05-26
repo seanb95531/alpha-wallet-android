@@ -31,7 +31,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.analytics.QrScanResultType;
 import com.alphawallet.app.entity.walletconnect.WalletConnectSessionItem;
 import com.alphawallet.app.entity.walletconnect.WalletConnectV2SessionItem;
@@ -138,8 +137,6 @@ public class WalletConnectSessionActivity extends BaseActivity
         initViewModel();
         viewModel.updateSessions();
         startConnectionCheck();
-
-        viewModel.track(Analytics.Navigation.WALLET_CONNECT_SESSIONS);
     }
 
     @Override

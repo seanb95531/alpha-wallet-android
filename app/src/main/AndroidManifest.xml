@@ -37,6 +37,7 @@
             android:testOnly="false"
             android:theme="@style/AppTheme.NoActionBar"
             android:usesCleartextTraffic="true"
+            android:enableOnBackInvokedCallback="false"
             tools:replace="android:name, android:theme, android:allowBackup">
 
 
@@ -136,17 +137,6 @@
         <activity
                 android:name=".ui.SplashActivity"
                 android:theme="@style/AppTheme.NoActionBar.Splash" />
-
-        <service
-                android:name=".service.AlphaWalletFirebaseMessagingService"
-                android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-            <meta-data
-                    android:name="com.google.firebase.messaging.default_notification_channel_id"
-                    android:value="alphawallet" />
-        </service>
 
         <activity
                 android:name=".ui.WalletConnectV2Activity"
@@ -371,6 +361,10 @@
                 android:label="@string/action_node_status" />
 
         <activity
+                android:name=".ui.NodeRPCsActivity"
+                android:label="@string/action_node_rpcs" />
+
+        <activity
                 android:name=".ui.CoinbasePayActivity"
                 android:label="@string/title_buy_with_coinbase_pay" />
 
@@ -379,16 +373,8 @@
                 android:label="@string/key_diagnostic" />
 
         <activity
-                android:name=".ui.AnalyticsSettingsActivity"
-                android:label="@string/settings_title_analytics" />
-
-        <activity
                 android:name=".ui.CrashReportSettingsActivity"
                 android:label="@string/settings_title_crash_reporting" />
-
-        <activity
-                android:name=".ui.NotificationSettingsActivity"
-                android:label="@string/title_notifications" />
 
         <service
                 android:name=".service.PriceAlertsService"

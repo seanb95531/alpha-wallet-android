@@ -16,10 +16,8 @@ import com.alphawallet.app.interact.ExportWalletInteract;
 import com.alphawallet.app.interact.FetchWalletsInteract;
 import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.router.HomeRouter;
-import com.alphawallet.app.service.AlphaWalletNotificationService;
 import com.alphawallet.app.util.Utils;
 import com.alphawallet.app.util.ens.AWEnsResolver;
-import com.alphawallet.ethereum.EthereumNetworkBase;
 
 import javax.inject.Inject;
 
@@ -38,7 +36,6 @@ public class WalletActionsViewModel extends BaseViewModel
     private final DeleteWalletInteract deleteWalletInteract;
     private final ExportWalletInteract exportWalletInteract;
     private final FetchWalletsInteract fetchWalletsInteract;
-    private final AlphaWalletNotificationService alphaWalletNotificationService;
     private final MutableLiveData<Integer> saved = new MutableLiveData<>();
     private final MutableLiveData<Integer> walletCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> deleted = new MutableLiveData<>();
@@ -46,21 +43,18 @@ public class WalletActionsViewModel extends BaseViewModel
     private final MutableLiveData<ErrorEnvelope> exportWalletError = new MutableLiveData<>();
     private final MutableLiveData<ErrorEnvelope> deleteWalletError = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isTaskRunning = new MutableLiveData<>();
-    private Disposable notificationDisposable;
 
     @Inject
     WalletActionsViewModel(
         HomeRouter homeRouter,
         DeleteWalletInteract deleteWalletInteract,
         ExportWalletInteract exportWalletInteract,
-        FetchWalletsInteract fetchWalletsInteract,
-        AlphaWalletNotificationService alphaWalletNotificationService
+        FetchWalletsInteract fetchWalletsInteract
     )
     {
         this.deleteWalletInteract = deleteWalletInteract;
         this.exportWalletInteract = exportWalletInteract;
         this.fetchWalletsInteract = fetchWalletsInteract;
-        this.alphaWalletNotificationService = alphaWalletNotificationService;
         this.homeRouter = homeRouter;
     }
 
@@ -99,15 +93,7 @@ public class WalletActionsViewModel extends BaseViewModel
 
     private void prepareForDeletion()
     {
-        // TODO: [Notifications] Reactivate this when unsubscribe is implemented
-//        notificationDisposable =
-//            alphaWalletNotificationService.unsubscribe(EthereumNetworkBase.MAINNET_ID)
-//                .observeOn(Schedulers.io())
-//                .subscribeOn(Schedulers.io())
-//                .subscribe(result -> Timber.d("unsubscribe result => " + result), Timber::e);
-
-        // For now, unsubscribe to firebase topic
-        alphaWalletNotificationService.unsubscribeToTopic(EthereumNetworkBase.MAINNET_ID);
+        // Notification unsubscription removed
     }
 
     public void fetchWalletCount()

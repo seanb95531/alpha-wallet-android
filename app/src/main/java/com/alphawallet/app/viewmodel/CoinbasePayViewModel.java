@@ -8,7 +8,6 @@ import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.coinbasepay.DestinationWallet;
 import com.alphawallet.app.interact.GenericWalletInteract;
 import com.alphawallet.app.repository.CoinbasePayRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 
 import java.util.List;
 
@@ -29,12 +28,10 @@ public class CoinbasePayViewModel extends BaseViewModel
 
     @Inject
     public CoinbasePayViewModel(GenericWalletInteract genericWalletInteract,
-                                CoinbasePayRepositoryType coinbasePayRepository,
-                                AnalyticsServiceType analyticsService)
+                                CoinbasePayRepositoryType coinbasePayRepository)
     {
         this.genericWalletInteract = genericWalletInteract;
         this.coinbasePayRepository = coinbasePayRepository;
-        setAnalyticsService(analyticsService);
     }
 
     public LiveData<Wallet> defaultWallet()

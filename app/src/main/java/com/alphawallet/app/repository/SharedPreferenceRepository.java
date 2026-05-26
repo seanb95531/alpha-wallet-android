@@ -49,7 +49,6 @@ public class SharedPreferenceRepository implements PreferenceRepositoryType {
     private static final String ANALYTICS_KEY = "analytics_key";
     private static final String CRASH_REPORTING_KEY = "crash_reporting_key";
     private static final String WALLET_LOGIN_TIME = "wallet_login_time_";
-    private static final String FIREBASE_MESSAGING_TOKEN = "firebase_messaging_token";
     private static final String RATE_APP_SHOWN = "rate_us_shown";
     private static final String LAUNCH_COUNT = "launch_count";
     private static final String NEW_WALLET = "new_wallet_";
@@ -439,19 +438,6 @@ public class SharedPreferenceRepository implements PreferenceRepositoryType {
     public void logIn(String address)
     {
         pref.edit().putLong(getAddressKey(WALLET_LOGIN_TIME, address), System.currentTimeMillis() / 1000).apply();
-    }
-
-    @Override
-    public void setFirebaseMessagingToken(String token)
-    {
-        pref.edit().putString(FIREBASE_MESSAGING_TOKEN, token).apply();
-    }
-
-    @Override
-    public String getFirebaseMessagingToken()
-    {
-        return pref.getString(FIREBASE_MESSAGING_TOKEN, "");
-
     }
 
     @Override

@@ -22,8 +22,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.CryptoFunctions;
 import com.alphawallet.app.entity.EIP681Type;
 import com.alphawallet.app.entity.GasEstimate;
@@ -653,9 +651,6 @@ public class SendActivity extends BaseActivity implements AmountReadyCallback, S
     @Override
     public void notifyConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        viewModel.track(Analytics.Action.ACTION_SHEET_COMPLETED, props);
     }
 
     @Override

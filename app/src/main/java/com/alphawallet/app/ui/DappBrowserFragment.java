@@ -62,8 +62,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.CryptoFunctions;
 import com.alphawallet.app.entity.CustomViewSettings;
 import com.alphawallet.app.entity.DApp;
@@ -313,7 +311,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
         }
         else
         {
-            viewModel.track(Analytics.Navigation.BROWSER);
             web3.setWebLoadCallback(this);
         }
 
@@ -1225,8 +1222,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
             });
             errorDialog.setCancelable(false);
             errorDialog.show();
-
-            viewModel.trackError(Analytics.Error.BROWSER, message);
         }
     }
 
@@ -1487,10 +1482,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
     private boolean loadUrl(String urlText)
     {
         requireContext();
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_URL, urlText);
-        viewModel.track(Analytics.Action.LOAD_URL, props);
-
         // ensure the URL is whitelisted, that is it is featured in the dapp list, and check if the app is in developer override mode
         if (!viewModel.getDeveloperOverrideState(getContext()) && !DappBrowserUtils.isInDappsList(this.getContext(), urlText))
         {
@@ -1540,10 +1531,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
             web3.loadUrl(Utils.formatUrl(urlText));
             addressBar.leaveEditMode();
             web3.requestFocus();
-
-            AnalyticsProperties props = new AnalyticsProperties();
-            props.put(Analytics.PROPS_URL, urlText);
-            viewModel.track(Analytics.Action.LOAD_URL, props);
         }
     }
 
@@ -1557,8 +1544,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
             }
             web3.resetView();
             web3.reload();
-
-            viewModel.track(Analytics.Action.RELOAD_BROWSER);
         }
     }
 
@@ -1586,37 +1571,24 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
                         qrCode = data.getStringExtra(C.EXTRA_QR_CODE);
                         if (qrCode == null || checkForMagicLink(qrCode)) return;
 
-                        AnalyticsProperties props = new AnalyticsProperties();
                         QRParser parser = QRParser.getInstance(EthereumNetworkRepository.extraChains());
                         QRResult result = parser.parse(qrCode);
                         switch (result.type)
                         {
                             case ADDRESS:
-                                props.put(QrScanResultType.KEY, QrScanResultType.ADDRESS.getValue());
-                                viewModel.track(Analytics.Action.SCAN_QR_CODE_SUCCESS, props);
-
                                 //ethereum address was scanned. In dapp browser what do we do? maybe populate an input field with address?
                                 copyToClipboard(result.getAddress());
                                 break;
                             case PAYMENT:
                             case TRANSFER:
-                                props.put(QrScanResultType.KEY, QrScanResultType.ADDRESS_OR_EIP_681.getValue());
-                                viewModel.track(Analytics.Action.SCAN_QR_CODE_SUCCESS, props);
-
                                 //EIP681 payment request scanned, should go to send
                                 viewModel.showSend(getContext(), result);
                                 break;
 
                             case FUNCTION_CALL:
-                                props.put(QrScanResultType.KEY, QrScanResultType.ADDRESS_OR_EIP_681.getValue());
-                                viewModel.track(Analytics.Action.SCAN_QR_CODE_SUCCESS, props);
-
                                 //EIP681 function call. TODO: create function call confirmation. For now treat same way as tokenscript function call
                                 break;
                             case URL:
-                                props.put(QrScanResultType.KEY, QrScanResultType.URL.getValue());
-                                viewModel.track(Analytics.Action.SCAN_QR_CODE_SUCCESS, props);
-
                                 loadUrlRemote(qrCode);
                                 break;
                             case OTHER:
@@ -1994,10 +1966,6 @@ public class DappBrowserFragment extends BaseFragment implements OnSignTransacti
     @Override
     public void notifyConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        props.put(Analytics.PROPS_ACTION_SHEET_SOURCE, ActionSheetSource.BROWSER);
-        viewModel.track(Analytics.Action.ACTION_SHEET_COMPLETED, props);
     }
 
     @Override

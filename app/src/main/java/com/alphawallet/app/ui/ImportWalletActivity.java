@@ -23,8 +23,6 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.EIP681Type;
 import com.alphawallet.app.entity.ErrorEnvelope;
 import com.alphawallet.app.entity.ImportWalletCallback;
@@ -204,7 +202,6 @@ public class ImportWalletActivity extends BaseActivity implements OnImportSeedLi
     protected void onResume()
     {
         super.onResume();
-        viewModel.track(Analytics.Navigation.IMPORT_WALLET);
 
         ((ImportSeedFragment) pages.get(ImportType.SEED_FORM_INDEX.ordinal()).second)
                 .setOnImportSeedListener(this);
@@ -249,26 +246,6 @@ public class ImportWalletActivity extends BaseActivity implements OnImportSeedLi
 
         ImportWalletType importType = wallet.second;
         boolean fromSplash = getIntent().getBooleanExtra(C.EXTRA_FROM_SPLASH, false);
-        if (fromSplash)
-        {
-            AnalyticsProperties firstActionProps = new AnalyticsProperties();
-            if (importType == ImportWalletType.WATCH)
-            {
-                firstActionProps.put(FirstWalletAction.KEY, FirstWalletAction.WATCH_WALLET.getValue());
-            }
-            else
-            {
-                firstActionProps.put(FirstWalletAction.KEY, FirstWalletAction.IMPORT_WALLET.getValue());
-            }
-            viewModel.track(Analytics.Action.FIRST_WALLET_ACTION, firstActionProps);
-        }
-        else
-        {
-            AnalyticsProperties importProps = new AnalyticsProperties();
-            importProps.put(Analytics.PROPS_WALLET_TYPE, wallet.first.type.toString());
-            importProps.put(Analytics.PROPS_IMPORT_WALLET_TYPE, importType);
-            viewModel.track(Analytics.Action.IMPORT_WALLET, importProps);
-        }
 
         Intent result = new Intent();
         result.putExtra(C.Key.WALLET, wallet.first);

@@ -187,7 +187,6 @@ public class GasWidget2 extends LinearLayout implements Runnable, GasWidgetInter
             gasSpread.setCustom(maxFeePerGas, maxPriorityFee, expectedTxTime);
         }
 
-        tokensService.track(currentGasSpeedIndex.name());
         handler.post(this);
     }
 

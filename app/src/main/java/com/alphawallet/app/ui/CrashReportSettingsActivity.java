@@ -8,7 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.viewmodel.AnalyticsSettingsViewModel;
+import com.alphawallet.app.viewmodel.CrashReportSettingsViewModel;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -17,7 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class CrashReportSettingsActivity extends BaseActivity
 {
-    AnalyticsSettingsViewModel viewModel;
+    CrashReportSettingsViewModel viewModel;
     SwitchMaterial crashReportSwitch;
 
     @Override
@@ -31,7 +31,7 @@ public class CrashReportSettingsActivity extends BaseActivity
 
         setTitle(getString(R.string.settings_title_crash_reporting));
 
-        viewModel = new ViewModelProvider(this).get(AnalyticsSettingsViewModel.class);
+        viewModel = new ViewModelProvider(this).get(CrashReportSettingsViewModel.class);
 
         initViews();
     }

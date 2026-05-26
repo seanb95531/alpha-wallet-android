@@ -378,19 +378,9 @@ public class Web3TokenView extends WebView
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error)
         {
-            System.out.println("YOLESS: " + error.toString());
-            handler.proceed(); // Ignore SSL certificate errors
+            handler.cancel();
         }
     }
-
-    /*
-    webView.setWebViewClient(new WebViewClient() {
-    @Override
-    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-        handler.proceed(); // Ignore SSL certificate errors
-    }
-});
-     */
 
     // Rendering
     public void displayTicketHolder(Token token, TicketRange range, AssetDefinitionService assetService) {

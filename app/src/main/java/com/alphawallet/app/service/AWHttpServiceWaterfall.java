@@ -94,11 +94,13 @@ public class AWHttpServiceWaterfall extends HttpService
 
     public static final String DEFAULT_URL = "http://localhost:8545/";
 
-    private static final Logger log = LoggerFactory.getLogger(org.web3j.protocol.http.HttpService.class);
+    private static final Logger log = LoggerFactory.getLogger(AWHttpServiceWaterfall.class);
+
+    private static RPCRankingManager rankingManager; // shared static reference
 
     private final OkHttpClient httpClient;
 
-    private final String[] urls; // Changed to array of URLs
+    private final String[] fallbackUrls; // hardcoded fallback URLs
     private final boolean includeRawResponse;
     private final String infuraSecret;
     private final String infuraKey;
@@ -108,10 +110,18 @@ public class AWHttpServiceWaterfall extends HttpService
 
     private final HashMap<String, String> headers = new HashMap<>();
 
+    /**
+     * Set the shared RPCRankingManager instance. Called once at app startup from DI.
+     */
+    public static void setRankingManager(RPCRankingManager manager)
+    {
+        rankingManager = manager;
+    }
+
     public AWHttpServiceWaterfall(String[] urls, long chainId, OkHttpClient httpClient, String infuraKey, String infuraSecret, String klaytnKey, boolean includeRawResponses)
     {
         super(includeRawResponses);
-        this.urls = urls;
+        this.fallbackUrls = urls;
         this.httpClient = httpClient;
         this.includeRawResponse = includeRawResponses;
         this.infuraKey = infuraKey;
@@ -120,35 +130,83 @@ public class AWHttpServiceWaterfall extends HttpService
         this.chainId = chainId;
     }
 
+    /**
+     * Resolve the URLs to use: prefer ranked RPCs from the manager, fall back to hardcoded.
+     */
+    private String[] getActiveUrls()
+    {
+        if (rankingManager != null)
+        {
+            String[] ranked = rankingManager.getRPCsForChain(chainId);
+            if (ranked != null && ranked.length > 0)
+            {
+                return ranked;
+            }
+        }
+        return fallbackUrls;
+    }
+
     @Override
     protected InputStream performIO(String request) throws IOException
     {
-        // Start at a random point within the URLs
-        int startIndex = random.nextInt(urls.length);
+        String[] urls = getActiveUrls();
+
+        // Use round-robin via ranking manager if available, otherwise random start.
+        // This distributes load evenly across all live RPCs to avoid DDoS-ing any single endpoint.
+        int startIndex;
+        if (rankingManager != null)
+        {
+            startIndex = rankingManager.getNextRPCIndex(chainId, urls.length);
+        }
+        else
+        {
+            startIndex = random.nextInt(urls.length);
+        }
 
         // Round-robin try all URLs
         for (int count = 0; count < urls.length; count++)
         {
             String url = urls[(startIndex + count) % urls.length];
+            long callStart = System.currentTimeMillis();
+            Response response = null;
 
             try
             {
-                okhttp3.Response response = performSingleIO(url, request);
+                response = performSingleIO(url, request);
 
                 // Check if the response is valid (2xx status code)
                 if (response.isSuccessful())
                 {
+                    long elapsed = System.currentTimeMillis() - callStart;
+                    if (rankingManager != null)
+                    {
+                        rankingManager.recordCallResult(chainId, url, elapsed);
+                    }
                     return processResponse(response);
+                    // Note: on success, the response body stream is returned to the caller
+                    // who is responsible for closing it via the InputStream
                 }
                 else
                 {
                     Timber.d("Response was %s, retrying...", response.code());
+                    response.close(); // close failed response to avoid connection leak
+                    if (rankingManager != null)
+                    {
+                        rankingManager.recordCallResult(chainId, url, -1);
+                    }
                 }
             }
             catch (IOException e)
             {
+                if (response != null)
+                {
+                    response.close(); // close response on exception to avoid connection leak
+                }
                 log.warn("Request to {} failed: {}", url, e.getMessage());
-                // Optionally, re-throw for specific error handling at a higher level
+                if (rankingManager != null)
+                {
+                    rankingManager.recordCallResult(chainId, url, -1);
+                }
             }
         }
 
@@ -190,11 +248,13 @@ public class AWHttpServiceWaterfall extends HttpService
             }
             else
             {
+                response.close(); // no body to read, close the response
                 return buildNullInputStream();
             }
         }
         else
         {
+            response.close(); // close before throwing to avoid connection leak
             throw new IOException("Unsuccessful response: " + response.code());
         }
     }

@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.viewmodel.NameThisWalletViewModel;
@@ -100,7 +99,6 @@ public class NameThisWalletActivity extends BaseActivity implements StandardFunc
     protected void onResume()
     {
         super.onResume();
-        viewModel.track(Analytics.Navigation.NAME_WALLET);
         viewModel.prepare();
     }
 

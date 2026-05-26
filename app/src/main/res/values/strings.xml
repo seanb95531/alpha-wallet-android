@@ -948,6 +948,11 @@
     <string name="label_minimum_received">Minimum Received</string>
     <string name="label_balance">Balance: </string>
     <string name="action_node_status">Node Status</string>
+    <string name="action_node_rpcs">Node RPCs</string>
+    <string name="rpc_rank_untested">untested</string>
+    <string name="rpc_rank_ms">%1$d ms</string>
+    <string name="action_reset_rpc_fetch">Refresh</string>
+    <string name="rpc_fetch_reset_message">RPC fetch triggered. Reopen this page in a few seconds to see updated data.</string>
     <string name="error_insufficient_balance">Insufficient %1$s balance</string>
     <string name="title_select_token">Select Token</string>
     <string name="no_results_found">No results found</string>

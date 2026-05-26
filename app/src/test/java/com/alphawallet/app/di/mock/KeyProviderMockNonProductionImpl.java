@@ -111,6 +111,12 @@ public class KeyProviderMockNonProductionImpl implements KeyProvider
     }
 
     @Override
+    public String getAwApiKey()
+    {
+        return null;
+    }
+
+    @Override
     public String getOkLinkKey()
     {
         return null;

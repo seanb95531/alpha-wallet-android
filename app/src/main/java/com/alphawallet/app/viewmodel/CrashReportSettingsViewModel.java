@@ -7,30 +7,19 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class AnalyticsSettingsViewModel extends BaseViewModel
+public class CrashReportSettingsViewModel extends BaseViewModel
 {
     private final PreferenceRepositoryType preferenceRepository;
 
     @Inject
-    AnalyticsSettingsViewModel(PreferenceRepositoryType preferenceRepository)
+    CrashReportSettingsViewModel(PreferenceRepositoryType preferenceRepository)
     {
         this.preferenceRepository = preferenceRepository;
-//        setAnalyticsService(analyticsService);
-    }
-
-    public boolean isAnalyticsEnabled()
-    {
-        return preferenceRepository.isAnalyticsEnabled();
     }
 
     public boolean isCrashReportingEnabled()
     {
         return preferenceRepository.isCrashReportingEnabled();
-    }
-
-    public void toggleAnalytics(boolean isEnabled)
-    {
-        preferenceRepository.setAnalyticsEnabled(isEnabled);
     }
 
     public void toggleCrashReporting(boolean isEnabled)

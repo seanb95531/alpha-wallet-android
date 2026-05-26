@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.MediaLinks;
 import com.alphawallet.app.viewmodel.SupportSettingsViewModel;
 import com.alphawallet.app.widget.SettingsItemView;
@@ -54,7 +53,6 @@ public class SupportSettingsActivity extends BaseActivity
     protected void onResume()
     {
         super.onResume();
-        viewModel.track(Analytics.Navigation.SETTINGS_SUPPORT);
     }
 
     private void initViewModel()
@@ -157,7 +155,6 @@ public class SupportSettingsActivity extends BaseActivity
         {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(MediaLinks.AWALLET_GITHUB));
-            viewModel.track(Analytics.Action.SUPPORT_GITHUB);
             startActivity(intent);
         }
         catch (Exception e)
@@ -174,7 +171,6 @@ public class SupportSettingsActivity extends BaseActivity
             {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(MediaLinks.AWALLET_DISCORD_URL));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                viewModel.track(Analytics.Action.SUPPORT_DISCORD);
                 startActivity(intent);
             }
             catch (Exception e)
@@ -196,7 +192,6 @@ public class SupportSettingsActivity extends BaseActivity
 
         try
         {
-            viewModel.track(Analytics.Action.SUPPORT_EMAIL);
             startActivity(intent);
         }
         catch (Exception e)
@@ -238,7 +233,6 @@ public class SupportSettingsActivity extends BaseActivity
         }
         try
         {
-            viewModel.track(Analytics.Action.SUPPORT_TWITTER);
             startActivity(intent);
         }
         catch (Exception e)
@@ -302,7 +296,6 @@ public class SupportSettingsActivity extends BaseActivity
 
         try
         {
-            viewModel.track(Analytics.Action.SUPPORT_FAQ);
             startActivity(intent);
         }
         catch (Exception e)

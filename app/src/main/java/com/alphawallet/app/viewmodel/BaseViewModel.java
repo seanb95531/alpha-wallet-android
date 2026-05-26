@@ -9,14 +9,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.alphawallet.app.C;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.ErrorEnvelope;
 import com.alphawallet.app.entity.ServiceException;
 import com.alphawallet.app.entity.tokens.Token;
-import com.alphawallet.app.service.AnalyticsServiceType;
-
-import org.json.JSONObject;
 
 import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
@@ -31,7 +26,6 @@ public class BaseViewModel extends ViewModel
     protected final MutableLiveData<ErrorEnvelope> error = new MutableLiveData<>();
     protected final MutableLiveData<Boolean> progress = new MutableLiveData<>();
     protected Disposable disposable;
-    private AnalyticsServiceType analyticsService;
 
     public static void onQueueUpdate(int complete)
     {
@@ -112,59 +106,4 @@ public class BaseViewModel extends ViewModel
         //do nothing
     }
 
-    protected void setAnalyticsService(AnalyticsServiceType analyticsService)
-    {
-        this.analyticsService = analyticsService;
-    }
-
-    public void identify(String uuid)
-    {
-        if (analyticsService != null)
-        {
-            analyticsService.identify(uuid);
-        }
-    }
-
-    public void track(Analytics.Navigation event)
-    {
-        trackEvent(event.getValue());
-    }
-
-    public void track(Analytics.Navigation event, AnalyticsProperties props)
-    {
-        trackEventWithProps(event.getValue(), props);
-    }
-
-    public void track(Analytics.Action event)
-    {
-        trackEvent(event.getValue());
-    }
-
-    public void track(Analytics.Action event, AnalyticsProperties props)
-    {
-        trackEventWithProps(event.getValue(), props);
-    }
-    
-    public void trackError(Analytics.Error source, String message)
-    {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ERROR_MESSAGE, message);
-        trackEventWithProps(source.getValue(), props);
-    }
-
-    private void trackEvent(String event)
-    {
-        if (analyticsService != null)
-        {
-            analyticsService.track(event);
-        }
-    }
-
-    private void trackEventWithProps(String event, AnalyticsProperties props)
-    {
-        if (analyticsService != null)
-        {
-            analyticsService.track(event, props);
-        }
-    }
 }

@@ -1,7 +1,5 @@
 package com.alphawallet.app.viewmodel;
 
-import com.alphawallet.app.service.AnalyticsServiceType;
-
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
@@ -10,8 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class MyDappsViewModel extends BaseViewModel
 {
     @Inject
-    MyDappsViewModel(AnalyticsServiceType analyticsService)
+    MyDappsViewModel()
     {
-        setAnalyticsService(analyticsService);
     }
 }

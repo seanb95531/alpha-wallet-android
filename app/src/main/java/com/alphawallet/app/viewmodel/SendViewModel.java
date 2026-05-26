@@ -19,7 +19,6 @@ import com.alphawallet.app.interact.CreateTransactionInteract;
 import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
 import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.router.MyAddressRouter;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
@@ -61,8 +60,7 @@ public class SendViewModel extends BaseViewModel implements TransactionSendHandl
                          CreateTransactionInteract createTransactionInteract,
                          GasService gasService,
                          AssetDefinitionService assetDefinitionService,
-                         KeyService keyService,
-                         AnalyticsServiceType analyticsService)
+                         KeyService keyService)
     {
         this.myAddressRouter = myAddressRouter;
         this.networkRepository = ethereumNetworkRepositoryType;
@@ -71,7 +69,6 @@ public class SendViewModel extends BaseViewModel implements TransactionSendHandl
         this.assetDefinitionService = assetDefinitionService;
         this.keyService = keyService;
         this.createTransactionInteract = createTransactionInteract;
-        setAnalyticsService(analyticsService);
     }
 
     public MutableLiveData<TransactionReturn> transactionFinalised()

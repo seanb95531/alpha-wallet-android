@@ -12,7 +12,6 @@ import android.webkit.URLUtil;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.NetworkInfo;
 import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.viewmodel.CustomNetworkViewModel;
@@ -112,7 +111,6 @@ public class AddCustomRPCNetworkActivity extends BaseActivity implements Standar
     protected void onResume()
     {
         super.onResume();
-        viewModel.track(Analytics.Navigation.ADD_CUSTOM_NETWORK);
     }
 
     private void addFunctionBar(List<Integer> functionResources)

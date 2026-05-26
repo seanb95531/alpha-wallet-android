@@ -13,8 +13,6 @@ import android.view.View;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.CreateWalletCallbackInterface;
 import com.alphawallet.app.entity.CustomViewSettings;
 import com.alphawallet.app.entity.Operation;
@@ -102,9 +100,6 @@ public class SplashActivity extends BaseActivity implements CreateWalletCallback
             viewModel.setDefaultBrowser();
             findViewById(R.id.layout_new_wallet).setVisibility(View.VISIBLE);
             findViewById(R.id.button_create).setOnClickListener(v -> {
-                AnalyticsProperties props = new AnalyticsProperties();
-                props.put(FirstWalletAction.KEY, FirstWalletAction.CREATE_WALLET.getValue());
-                viewModel.track(Analytics.Action.FIRST_WALLET_ACTION, props);
                 viewModel.createNewWallet(this, this);
             });
             findViewById(R.id.button_watch).setOnClickListener(v -> {

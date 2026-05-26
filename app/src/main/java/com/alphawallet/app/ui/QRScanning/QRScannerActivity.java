@@ -21,8 +21,6 @@ import androidx.preference.PreferenceManager;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.analytics.QrScanResultType;
 import com.alphawallet.app.entity.analytics.QrScanSource;
 import com.alphawallet.app.ui.BaseActivity;
@@ -113,10 +111,6 @@ public class QRScannerActivity extends BaseActivity
     protected void onResume()
     {
         super.onResume();
-        String source = getIntent().getStringExtra(QrScanSource.KEY);
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_QR_SCAN_SOURCE, source);
-        viewModel.track(Analytics.Navigation.SCAN_QR_CODE, props);
     }
 
     private void onError(Throwable throwable)
@@ -173,8 +167,6 @@ public class QRScannerActivity extends BaseActivity
 
     private void displayErrorDialog(String title, String errorMessage)
     {
-        viewModel.track(Analytics.Action.SCAN_QR_CODE_ERROR);
-
         AWalletAlertDialog aDialog = new AWalletAlertDialog(this);
         aDialog.setTitle(title);
         aDialog.setMessage(errorMessage);
@@ -199,7 +191,6 @@ public class QRScannerActivity extends BaseActivity
     public void onBackPressed()
     {
         super.onBackPressed();
-        viewModel.track(Analytics.Action.SCAN_QR_CODE_CANCELLED);
         Intent intent = new Intent();
         setResult(Activity.RESULT_CANCELED, intent);
         finish();
@@ -207,14 +198,6 @@ public class QRScannerActivity extends BaseActivity
 
     public void handleQRCode(String qrCode)
     {
-        String resultType = getIntent().getStringExtra(QrScanResultType.KEY);
-        if (!TextUtils.isEmpty(resultType))
-        {
-            AnalyticsProperties props = new AnalyticsProperties();
-            props.put(QrScanResultType.KEY, resultType);
-            viewModel.track(Analytics.Action.SCAN_QR_CODE_SUCCESS, props);
-        }
-
         if (qrCode.startsWith("wc:"))
         {
             startWalletConnect(qrCode);
@@ -228,7 +211,8 @@ public class QRScannerActivity extends BaseActivity
         }
     }
 
-    private void hideSystemUI()
+    @Override
+    protected void hideSystemUI()
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (prefs.getBoolean(FULL_SCREEN_STATE, false))

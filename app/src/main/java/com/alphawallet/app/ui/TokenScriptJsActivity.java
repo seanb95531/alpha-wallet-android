@@ -30,8 +30,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.GasEstimate;
 import com.alphawallet.app.entity.NetworkInfo;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
@@ -425,9 +423,6 @@ public class TokenScriptJsActivity extends BaseActivity implements StandardFunct
     @Override
     public void notifyConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        props.put(Analytics.PROPS_ACTION_SHEET_SOURCE, ActionSheetSource.BROWSER);
     }
 
     @Override
@@ -699,8 +694,6 @@ public class TokenScriptJsActivity extends BaseActivity implements StandardFunct
             });
             errorDialog.setCancelable(false);
             errorDialog.show();
-
-            viewModel.trackError(Analytics.Error.BROWSER, message);
         }
     }
 

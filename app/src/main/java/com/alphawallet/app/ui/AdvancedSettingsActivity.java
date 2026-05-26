@@ -1,5 +1,6 @@
 package com.alphawallet.app.ui;
 
+import static androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static com.alphawallet.app.C.RESET_WALLET;
 
 import android.Manifest;
@@ -15,6 +16,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
@@ -37,6 +41,7 @@ public class AdvancedSettingsActivity extends BaseActivity
 {
     private AdvancedSettingsViewModel viewModel;
     private SettingsItemView nodeStatus;
+    private SettingsItemView nodeRPCs;
     private SettingsItemView console;
     private SettingsItemView clearBrowserCache;
     private SettingsItemView tokenScript;
@@ -44,7 +49,6 @@ public class AdvancedSettingsActivity extends BaseActivity
     private SettingsItemView fullScreenSettings;
     private SettingsItemView refreshTokenDatabase;
     private SettingsItemView eip1559Transactions;
-    private SettingsItemView analytics;
     private SettingsItemView crashReporting;
     private SettingsItemView developerOverride;
     private SettingsItemView tokenScriptViewer;
@@ -86,6 +90,12 @@ public class AdvancedSettingsActivity extends BaseActivity
                 .withIcon(R.drawable.ic_settings_node_status)
                 .withTitle(R.string.action_node_status)
                 .withListener(this::onNodeStatusClicked)
+                .build();
+
+        nodeRPCs = new SettingsItemView.Builder(this)
+                .withIcon(R.drawable.ic_settings_node_rpcs)
+                .withTitle(R.string.action_node_rpcs)
+                .withListener(this::onNodeRPCsClicked)
                 .build();
 
         console = new SettingsItemView.Builder(this)
@@ -132,12 +142,6 @@ public class AdvancedSettingsActivity extends BaseActivity
                 .withIcon(R.drawable.ic_icons_settings_1559)
                 .withTitle(R.string.experimental_1559)
                 .withListener(this::on1559TransactionsClicked)
-                .build();
-
-        analytics = new SettingsItemView.Builder(this)
-                .withIcon(R.drawable.ic_settings_analytics)
-                .withTitle(R.string.settings_title_analytics)
-                .withListener(this::onAnalyticsClicked)
                 .build();
 
         crashReporting = new SettingsItemView.Builder(this)
@@ -220,6 +224,7 @@ public class AdvancedSettingsActivity extends BaseActivity
     {
         LinearLayout advancedSettingsLayout = findViewById(R.id.layout);
         advancedSettingsLayout.addView(nodeStatus);
+        advancedSettingsLayout.addView(nodeRPCs);
         advancedSettingsLayout.addView(console);
         advancedSettingsLayout.addView(clearBrowserCache);
         advancedSettingsLayout.addView(tokenScriptManagement);
@@ -227,7 +232,6 @@ public class AdvancedSettingsActivity extends BaseActivity
         advancedSettingsLayout.addView(refreshTokenDatabase);
         advancedSettingsLayout.addView(eip1559Transactions);
         advancedSettingsLayout.addView(tokenScriptViewer);
-        advancedSettingsLayout.addView(analytics);
         advancedSettingsLayout.addView(crashReporting);
         advancedSettingsLayout.addView(developerOverride);
     }
@@ -235,6 +239,11 @@ public class AdvancedSettingsActivity extends BaseActivity
     private void onNodeStatusClicked()
     {
         startActivity(new Intent(this, NodeStatusActivity.class));
+    }
+
+    private void onNodeRPCsClicked()
+    {
+        startActivity(new Intent(this, NodeRPCsActivity.class));
     }
 
     private void onConsoleClicked()
@@ -339,12 +348,6 @@ public class AdvancedSettingsActivity extends BaseActivity
         startActivity(intent);
     }
 
-    private void onAnalyticsClicked()
-    {
-        Intent intent = new Intent(this, AnalyticsSettingsActivity.class);
-        startActivity(intent);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
     {
@@ -374,6 +377,25 @@ public class AdvancedSettingsActivity extends BaseActivity
             cDialog.dismiss();
         });
         cDialog.show();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus)
+    {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && viewModel.getFullScreenState())
+        {
+            hideSystemUI();
+        }
+    }
+
+    @Override
+    protected void hideSystemUI()
+    {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat inset = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+        inset.setSystemBarsBehavior(BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        inset.hide(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.navigationBars());
     }
 
     @Override

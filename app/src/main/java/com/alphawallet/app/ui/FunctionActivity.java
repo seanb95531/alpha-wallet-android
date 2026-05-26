@@ -725,17 +725,6 @@ public class FunctionActivity extends BaseActivity implements FunctionCallback,
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState)
     {
         super.onSaveInstanceState(savedInstanceState);
-        tokenView.saveState(savedInstanceState);
-    }
-
-    @Override
-    public void onRestoreInstanceState(@NonNull Bundle savedInstanceState)
-    {
-        super.onRestoreInstanceState(savedInstanceState);
-        if (tokenView != null)
-        {
-            tokenView.restoreState(savedInstanceState);
-        }
     }
 
     @Override

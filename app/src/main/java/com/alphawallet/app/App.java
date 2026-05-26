@@ -12,6 +12,9 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 
+import com.alphawallet.app.repository.RpcConfigRepository;
+import com.alphawallet.app.service.AWHttpServiceWaterfall;
+import com.alphawallet.app.service.RPCRankingManager;
 import com.alphawallet.app.util.TimberInit;
 import com.alphawallet.app.walletconnect.AWWalletConnectClient;
 
@@ -30,6 +33,12 @@ public class App extends Application
 {
     @Inject
     AWWalletConnectClient awWalletConnectClient;
+
+    @Inject
+    RPCRankingManager rpcRankingManager;
+
+    @Inject
+    RpcConfigRepository rpcConfigRepository;
 
     private static App mInstance;
     private final Stack<Activity> activityStack = new Stack<>();
@@ -87,6 +96,13 @@ public class App extends Application
         }
 
         RxJavaPlugins.setErrorHandler(Timber::e);
+
+        // Initialise static network RPC config before anything accesses EthereumNetworkBase.
+        rpcConfigRepository.initialiseFromDisk();
+
+        // Initialize RPC ranking system and trigger startup stale check
+        AWHttpServiceWaterfall.setRankingManager(rpcRankingManager);
+        rpcRankingManager.checkAndUpdateRPCs();
 
         try
         {

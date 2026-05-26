@@ -7,14 +7,20 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +38,7 @@ import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.WalletType;
 import com.alphawallet.app.ui.widget.entity.AddressReadyCallback;
+import com.alphawallet.app.util.KeyboardUtils;
 import com.alphawallet.app.util.Utils;
 import com.alphawallet.app.viewmodel.WalletActionsViewModel;
 import com.alphawallet.app.widget.AWalletAlertDialog;
@@ -45,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import timber.log.Timber;
 
 @AndroidEntryPoint
 public class WalletActionsActivity extends BaseActivity implements Runnable, View.OnClickListener, AddressReadyCallback, StandardFunctionInterface
@@ -60,8 +68,10 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
     private ImageView walletSelectedIcon;
     private SettingsItemView deleteWalletSetting;
     private SettingsItemView backUpSetting;
+    private FunctionButtonBar functionBar;
     private InputAddress inputAddress;
     private InputView inputName;
+    private ScrollView contentScroll;
     private LinearLayout successOverlay;
     private AWalletAlertDialog aDialog;
     private final Handler handler = new Handler();
@@ -76,7 +86,7 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
         toolbar();
         setTitle(getString(R.string.manage_wallet));
 
-        FunctionButtonBar functionBar = findViewById(R.id.layoutButtons);
+        functionBar = findViewById(R.id.layoutButtons);
         functionBar.setupFunctions(this, new ArrayList<>(Collections.singletonList(R.string.action_save_name)));
         functionBar.revealButtons();
 
@@ -103,6 +113,7 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
     protected void onResume() {
         super.onResume();
         successOverlay = findViewById(R.id.layout_success_overlay);
+        reverseResolveEnsIfMissing();
     }
 
     private void initViewModel() {
@@ -122,11 +133,7 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
             viewModel.fetchWalletCount();
         }
 
-        if (wallet != null && TextUtils.isEmpty(wallet.ENSname))
-        {
-            //scan for ENS name
-            viewModel.scanForENS(wallet, this);
-        }
+        reverseResolveEnsIfMissing();
     }
 
     private void fetchedENSName(String ensName)
@@ -134,6 +141,7 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
         if (!TextUtils.isEmpty(ensName))
         {
             inputAddress.setENSName(ensName);
+            wallet.ENSname = ensName;
         }
     }
 
@@ -242,6 +250,8 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
         walletSelectedIcon = findViewById(R.id.selected_wallet_indicator);
         inputAddress = findViewById(R.id.input_ens);
         inputName = findViewById(R.id.input_name);
+        contentScroll = findScrollParent(inputName.getEditText());
+        inputAddress.setAddressCallback(this);
         walletSelectedIcon.setOnClickListener(this);
 
         walletIcon.bind(wallet);
@@ -269,6 +279,139 @@ public class WalletActionsActivity extends BaseActivity implements Runnable, Vie
         }
 
         setupWalletNames();
+        setupNameInputActions();
+    }
+
+    private void setupNameInputActions()
+    {
+        inputName.getEditText().setImeOptions(EditorInfo.IME_ACTION_DONE);
+        inputAddress.getEditText().setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+        inputName.getEditText().setOnFocusChangeListener((view, state) -> updateSaveButtonVisibility(state));
+        inputAddress.getEditText().setOnFocusChangeListener((view, state) -> updateSaveButtonVisibility(state));
+
+        inputName.getEditText().setOnEditorActionListener(this::handleImeSaveAction);
+        inputAddress.getEditText().setOnEditorActionListener(this::handleImeSaveAction);
+    }
+
+    private void updateSaveButtonVisibility(boolean isEditing)
+    {
+        if (functionBar != null)
+        {
+            functionBar.setVisibility(isEditing ? View.GONE : View.VISIBLE);
+        }
+
+        if (isEditing)
+        {
+            scrollActiveInputIntoView();
+        }
+    }
+
+    private void scrollActiveInputIntoView()
+    {
+        scrollInputIntoView(inputAddress.getEditText());
+        /*if (inputAddress.getEditText().hasFocus())
+        {
+
+        }
+        else if (inputName.getEditText().hasFocus())
+        {
+            scrollInputIntoView(inputName.getEditText());
+        }*/
+    }
+
+    private void scrollInputIntoView(View target)
+    {
+        if (contentScroll == null || target == null) return;
+
+        target.postDelayed(() -> {
+            Rect targetRect = new Rect(0, 0, target.getWidth(), target.getHeight());
+            target.requestRectangleOnScreen(targetRect, true);
+        }, 150);
+    }
+
+    private ScrollView findScrollParent(View child)
+    {
+        if (child == null) return null;
+        ViewParent parent = child.getParent();
+        while (parent != null)
+        {
+            if (parent instanceof ScrollView)
+            {
+                return (ScrollView) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event)
+    {
+        if (event.getAction() == MotionEvent.ACTION_DOWN && shouldClearInputFocus(event))
+        {
+            KeyboardUtils.hideKeyboard(getCurrentFocus());
+            inputName.getEditText().clearFocus();
+            inputAddress.getEditText().clearFocus();
+            updateSaveButtonVisibility(false);
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    private boolean shouldClearInputFocus(MotionEvent event)
+    {
+        if (inputName == null || inputAddress == null) return false;
+        boolean editing = inputName.getEditText().hasFocus() || inputAddress.getEditText().hasFocus();
+        if (!editing) return false;
+
+        return !isTouchInsideView(inputName.getEditText(), event)
+                && !isTouchInsideView(inputAddress.getEditText(), event);
+    }
+
+    private boolean isTouchInsideView(View view, MotionEvent event)
+    {
+        if (view == null) return false;
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        float rawX = event.getRawX();
+        float rawY = event.getRawY();
+        return rawX >= location[0]
+                && rawX <= (location[0] + view.getWidth())
+                && rawY >= location[1]
+                && rawY <= (location[1] + view.getHeight());
+    }
+
+    private boolean handleImeSaveAction(View source, int actionId, KeyEvent event)
+    {
+        boolean isDoneAction = actionId == EditorInfo.IME_ACTION_DONE
+                || actionId == EditorInfo.IME_ACTION_UNSPECIFIED
+                || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN);
+        if (!isDoneAction)
+        {
+            return false;
+        }
+
+        KeyboardUtils.hideKeyboard(source);
+        inputName.getEditText().clearFocus();
+        inputAddress.getEditText().clearFocus();
+        updateSaveButtonVisibility(false);
+
+        if (source == inputAddress.getEditText())
+        {
+            inputAddress.getAddress(); // trigger ENS resolve/reverse-resolve pipeline
+        }
+        else
+        {
+            saveWalletName();
+        }
+        return true;
+    }
+
+    private void reverseResolveEnsIfMissing()
+    {
+        if (wallet == null) return;
+        if (!TextUtils.isEmpty(wallet.ENSname)) return;
+        viewModel.scanForENS(wallet, this);
     }
 
     private void setupWalletNames()

@@ -5,15 +5,11 @@ import static com.alphawallet.app.entity.CryptoFunctions.sigFromByteArray;
 
 import android.util.Pair;
 
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.MessagePair;
 import com.alphawallet.app.entity.SignaturePair;
 import com.alphawallet.app.entity.TransactionReturn;
 import com.alphawallet.app.entity.Wallet;
-import com.alphawallet.app.repository.EthereumNetworkRepository;
 import com.alphawallet.app.repository.TransactionRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.KeystoreAccountService;
 import com.alphawallet.app.service.TransactionSendHandlerInterface;
 import com.alphawallet.app.web3.entity.Web3Transaction;
@@ -35,7 +31,6 @@ import io.reactivex.schedulers.Schedulers;
 public class CreateTransactionInteract
 {
     private final TransactionRepositoryType transactionRepository;
-    private final AnalyticsServiceType analyticsService;
     private TransactionSendHandlerInterface txInterface;
     private Disposable disposable;
     /**
@@ -44,11 +39,9 @@ public class CreateTransactionInteract
      */
     private long nonceForHardwareSign;
 
-    public CreateTransactionInteract(TransactionRepositoryType transactionRepository,
-                                     AnalyticsServiceType analyticsService)
+    public CreateTransactionInteract(TransactionRepositoryType transactionRepository)
     {
         this.transactionRepository = transactionRepository;
-        this.analyticsService = analyticsService;
     }
 
     public Single<SignaturePair> sign(Wallet wallet, MessagePair messagePair)
@@ -75,7 +68,6 @@ public class CreateTransactionInteract
     private void handleTransactionError(Throwable error, Web3Transaction w3Tx)
     {
         txInterface.transactionError(new TransactionReturn(error, w3Tx));
-        trackTransactionError(error.getMessage());
     }
 
     public void requestSignTransaction(Web3Transaction w3Tx, Wallet wallet, long chainId, TransactionSendHandlerInterface txInterface)
@@ -119,12 +111,6 @@ public class CreateTransactionInteract
                 txHash ->
                 {
                     txInterface.transactionFinalised(new TransactionReturn(txHash, w3Tx));
-
-                    trackTransactionCount(chainId);
-                    AnalyticsProperties props = new AnalyticsProperties();
-                    props.put(Analytics.PROPS_TRANSACTION_TYPE, "send");
-                    props.put(Analytics.PROPS_TRANSACTION_CHAIN_ID, String.valueOf(chainId));
-                    analyticsService.track(Analytics.Navigation.ACTION_SHEET_FOR_TRANSACTION_CONFIRMATION_SUCCESSFUL.getValue(), props);
                 },
                 error -> handleTransactionError(error, w3Tx)
             );
@@ -134,12 +120,6 @@ public class CreateTransactionInteract
     {
         RawTransaction rtx = transactionRepository.formatRawTransaction(w3Tx, nonceForHardwareSign, chainId);
         txInterface.transactionSigned(rlpEncodeSignature(rtx, sigData, chainId), w3Tx);
-
-        trackTransactionCount(chainId);
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_TRANSACTION_TYPE, "sign");
-        props.put(Analytics.PROPS_TRANSACTION_CHAIN_ID, String.valueOf(chainId));
-        analyticsService.track(Analytics.Navigation.ACTION_SHEET_FOR_TRANSACTION_CONFIRMATION_SUCCESSFUL.getValue(), props);
     }
 
     public Single<String> resend(Wallet from, BigInteger nonce, String to, BigInteger subunitAmount, BigInteger gasPrice, BigInteger gasLimit, byte[] data, long chainId)
@@ -168,7 +148,6 @@ public class CreateTransactionInteract
                 break;
             default:
                 String message = "Unimplemented sign type";
-                trackTransactionError(message);
                 throw new RuntimeException(message);
         }
     }
@@ -192,7 +171,6 @@ public class CreateTransactionInteract
                 break;
             default:
                 String message = "Unimplemented sign type";
-                trackTransactionError(message);
                 throw new RuntimeException(message);
         }
     }
@@ -212,17 +190,4 @@ public class CreateTransactionInteract
         return sigData;
     }
 
-    private void trackTransactionError(String message)
-    {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ERROR_MESSAGE, message);
-        analyticsService.track(Analytics.Navigation.ACTION_SHEET_FOR_TRANSACTION_CONFIRMATION_FAILED.getValue());
-    }
-
-    private void trackTransactionCount(long chainId)
-    {
-        analyticsService.increment(EthereumNetworkRepository.hasRealValue(chainId) ?
-            Analytics.UserProperties.TRANSACTION_COUNT.getValue() :
-            Analytics.UserProperties.TRANSACTION_COUNT_TESTNET.getValue());
-    }
 }

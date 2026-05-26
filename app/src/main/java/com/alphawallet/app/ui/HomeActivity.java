@@ -46,7 +46,6 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.ContractLocator;
 import com.alphawallet.app.entity.CustomViewSettings;
 import com.alphawallet.app.entity.DeepLinkRequest;
@@ -128,18 +127,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
     private String openLink = null;
     private String openToken = null;
     private AWalletAlertDialog wcProgressDialog;
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-        registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-            if (isGranted)
-            {
-                // FCM SDK (and your app) can post notifications.
-                viewModel.subscribeToNotifications();
-            }
-            else
-            {
-                Toast.makeText(this, getString(R.string.message_deny_request_post_notifications_permission), Toast.LENGTH_LONG).show();
-            }
-        });
 
     public HomeActivity()
     {
@@ -227,7 +214,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
         viewModelWC = new ViewModelProvider(this)
                 .get(WalletConnectViewModel.class);
 
-        viewModel.identify();
         viewModel.setWalletStartup();
         viewModel.setCurrencyAndLocale(this);
         viewModel.tryToShowWhatsNewDialog(this);
@@ -352,16 +338,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
 
     private void onDefaultWallet(Wallet wallet)
     {
-        // TODO: [Notifications] Uncomment once backend service is implemented
-//        if (!viewModel.isWatchOnlyWallet() && !viewModel.isPostNotificationsPermissionRequested(wallet.address))
-//        {
-//            viewModel.setPostNotificationsPermissionRequested(wallet.address);
-//            if (PermissionUtils.requestPostNotificationsPermission(this, requestPermissionLauncher))
-//            {
-//                viewModel.subscribeToNotifications();
-//            }
-//        }
-
         if (viewModel.checkNewWallet(wallet.address))
         {
             viewModel.setNewWallet(wallet.address, false);
@@ -1081,7 +1057,8 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
         }
     }
 
-    private void hideSystemUI()
+    @Override
+    protected void hideSystemUI()
     {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowInsetsControllerCompat inset = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
@@ -1089,7 +1066,8 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
         inset.hide(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.navigationBars());
     }
 
-    private void showSystemUI()
+    @Override
+    protected void showSystemUI()
     {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         WindowInsetsControllerCompat inset = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
@@ -1119,7 +1097,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
                 viewModel.handleSmartPass(this, request.data);
                 break;
             case URL_REDIRECT:
-                viewModel.track(Analytics.Action.DEEP_LINK);
                 if (fragmentsInitialised())
                 {
                     showPage(DAPP_BROWSER);
@@ -1144,7 +1121,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
             case WALLET_API_DEEPLINK:
                 Intent intent = new Intent(this, ApiV1Activity.class);
                 intent.putExtra(C.Key.API_V1_REQUEST_URL, request.data);
-                viewModel.track(Analytics.Action.DEEP_LINK_API_V1);
                 startActivity(intent);
                 break;
             case LEGACY_MAGICLINK:

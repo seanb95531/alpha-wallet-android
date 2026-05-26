@@ -22,8 +22,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
 import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.entity.Transaction;
@@ -552,9 +550,6 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
     @Override
     public void notifyConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        viewModel.track(Analytics.Action.ACTION_SHEET_COMPLETED, props);
     }
 
     private void txWritten(TransactionReturn transactionReturn)

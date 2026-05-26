@@ -35,7 +35,6 @@ import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.repository.TokenRepositoryType;
 import com.alphawallet.app.router.HomeRouter;
 import com.alphawallet.app.router.ImportWalletRouter;
-import com.alphawallet.app.service.AlphaWalletNotificationService;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.KeyService;
 import com.alphawallet.app.service.TickerService;
@@ -84,7 +83,6 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
     private final AssetDefinitionService assetService;
     private final PreferenceRepositoryType preferenceRepository;
     private final EthereumNetworkRepositoryType ethereumNetworkRepository;
-    private final AlphaWalletNotificationService alphaWalletNotificationService;
     private final TokenRepositoryType tokenRepository;
     private final TickerService tickerService;
     private final MutableLiveData<Wallet[]> wallets = new MutableLiveData<>();
@@ -119,7 +117,6 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
 
     @Inject
     WalletsViewModel(
-        AlphaWalletNotificationService alphaWalletNotificationService,
         SetDefaultWalletInteract setDefaultWalletInteract,
         FetchWalletsInteract fetchWalletsInteract,
         GenericWalletInteract genericWalletInteract,
@@ -135,7 +132,6 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
         PreferenceRepositoryType preferenceRepository,
         @ApplicationContext Context context)
     {
-        this.alphaWalletNotificationService = alphaWalletNotificationService;
         this.setDefaultWalletInteract = setDefaultWalletInteract;
         this.fetchWalletsInteract = fetchWalletsInteract;
         this.genericWalletInteract = genericWalletInteract;
@@ -149,7 +145,7 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
         this.tickerService = tickerService;
         this.assetService = assetService;
         this.preferenceRepository = preferenceRepository;
-        this.tokensService = new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, null, null, null);
+        this.tokensService = new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, null, null);
 
         ensResolver = new AWEnsResolver(TokenRepository.getWeb3jService(MAINNET_ID), context);
         syncCallback = null;
@@ -215,14 +211,6 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
         disposable = setDefaultWalletInteract
                 .set(wallet)
                 .subscribe(() -> changeDefaultWallet.postValue(wallet), this::onError);
-    }
-
-    public void subscribeToNotifications()
-    {
-        disposable = alphaWalletNotificationService.subscribe(MAINNET_ID)
-            .observeOn(Schedulers.io())
-            .subscribeOn(Schedulers.io())
-            .subscribe(result -> Timber.d("subscribe result => %s", result), Timber::e);
     }
 
     public void onPrepare(long chainId, SyncCallback cb)
@@ -342,7 +330,7 @@ public class WalletsViewModel extends BaseViewModel implements ServiceSyncCallba
     private Single<Wallet> startWalletSync(Wallet wallet)
     {
         return Single.fromCallable(() -> {
-            TokensService svs = new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, null, null, null);
+            TokensService svs = new TokensService(ethereumNetworkRepository, tokenRepository, tickerService, null, null);
             svs.setCurrentAddress(wallet.address.toLowerCase());
             svs.startUpdateCycle();
             svs.setCompletionCallback(this, 2);

@@ -193,10 +193,96 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             POLYGON_TEST_ID, GOERLI_ID
     ));
 
+    private static final String RPC_RANKINGS_REMOTE_URL = "https://pub-947f58bf7fb442f7a0d0686fcf757d76.r2.dev/rpc-rankings.json";
+    private static final Object rpcConfigLock = new Object();
+
+    public static String getRpcRankingsRemoteUrl()
+    {
+        return RPC_RANKINGS_REMOTE_URL;
+    }
+
+    public static String[] getConfiguredRPCUrls(long chainId)
+    {
+        synchronized (rpcConfigLock)
+        {
+            String[] configured = CHAIN_CONFIG_RPC.get(chainId);
+            return configured != null ? configured.clone() : new String[0];
+        }
+    }
+
+    public static boolean applyRpcConfigJson(String json)
+    {
+        if (TextUtils.isEmpty(json))
+        {
+            return false;
+        }
+
+        try
+        {
+            RpcRankingsPayload payload = new Gson().fromJson(json, RpcRankingsPayload.class);
+            if (payload == null || payload.chains == null)
+            {
+                return false;
+            }
+
+            Map<Long, String[]> updates = new HashMap<>();
+            for (RpcChainEntry chainEntry : payload.chains)
+            {
+                if (chainEntry == null || chainEntry.rpcs == null || chainEntry.rpcs.isEmpty() || !isChainSupported(chainEntry.chainId))
+                {
+                    continue;
+                }
+
+                List<String> urls = new ArrayList<>();
+                for (RpcEntry rpcEntry : chainEntry.rpcs)
+                {
+                    if (rpcEntry != null && !TextUtils.isEmpty(rpcEntry.url))
+                    {
+                        urls.add(rpcEntry.url);
+                    }
+                }
+
+                if (!urls.isEmpty())
+                {
+                    updates.put(chainEntry.chainId, urls.toArray(new String[0]));
+                }
+            }
+
+            if (updates.isEmpty())
+            {
+                return false;
+            }
+
+            synchronized (rpcConfigLock)
+            {
+                for (Map.Entry<Long, String[]> entry : updates.entrySet())
+                {
+                    CHAIN_CONFIG_RPC.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            refreshBuiltInNetworkRpcConfig();
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
     public static final Map<Long, String[]> CHAIN_CONFIG_RPC = new HashMap<>();
 
     static
     {
+        populateRPCList();
+    }
+
+    public static void populateRPCList()
+    {
+        synchronized (rpcConfigLock)
+        {
+            CHAIN_CONFIG_RPC.clear();
+
         CHAIN_CONFIG_RPC.put(MAINNET_ID, new String[]{
                 "https://rpc.payload.de",
                 "https://eth-mainnet.public.blastapi.io",
@@ -448,7 +534,26 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
                 "https://arbitrum-sepolia.gateway.tenderly.co",
                 "https://endpoints.omniatech.io/v1/arbitrum/sepolia/public"
         });
-    };
+        }
+    }
+
+    private static class RpcRankingsPayload
+    {
+        String generatedAt;
+        List<RpcChainEntry> chains = new ArrayList<>();
+    }
+
+    private static class RpcChainEntry
+    {
+        long chainId;
+        List<RpcEntry> rpcs = new ArrayList<>();
+    }
+
+    private static class RpcEntry
+    {
+        String url;
+        double responseTimeMs;
+    }
 
     private static final String INFURA_ENDPOINT = ".infura.io/v3/";
 
@@ -469,7 +574,7 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(MAINNET_ID, new NetworkInfo(C.ETHEREUM_NETWORK_NAME, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(MAINNET_ID),
                     "https://cn.etherscan.com/tx/", MAINNET_ID,
-                    "https://api-cn.etherscan.com/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=1&"));
             put(CLASSIC_ID, new NetworkInfo(C.CLASSIC_NETWORK_NAME, C.ETC_SYMBOL,
                     CHAIN_CONFIG_RPC.get(CLASSIC_ID),
                     "https://blockscout.com/etc/mainnet/tx/", CLASSIC_ID,
@@ -484,11 +589,11 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(BINANCE_TEST_ID, new NetworkInfo(C.BINANCE_TEST_NETWORK, C.BINANCE_SYMBOL,
                     CHAIN_CONFIG_RPC.get(BINANCE_TEST_ID),
                     "https://testnet.bscscan.com/tx/", BINANCE_TEST_ID,
-                    "https://api-testnet.bscscan.com/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=97&"));
             put(BINANCE_MAIN_ID, new NetworkInfo(C.BINANCE_MAIN_NETWORK, C.BINANCE_SYMBOL,
                     CHAIN_CONFIG_RPC.get(BINANCE_MAIN_ID),
                     "https://bscscan.com/tx/", BINANCE_MAIN_ID,
-                    "https://api.bscscan.com/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=56&"));
             put(AVALANCHE_ID, new NetworkInfo(C.AVALANCHE_NETWORK, C.AVALANCHE_SYMBOL,
                     CHAIN_CONFIG_RPC.get(AVALANCHE_ID),
                     "https://cchain.explorer.avax.network/tx/", AVALANCHE_ID,
@@ -508,19 +613,19 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(POLYGON_ID, new NetworkInfo(C.POLYGON_NETWORK, C.POLYGON_SYMBOL,
                     CHAIN_CONFIG_RPC.get(POLYGON_ID),
                     "https://polygonscan.com/tx/", POLYGON_ID,
-                    "https://api.polygonscan.com/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=137&"));
             put(POLYGON_TEST_ID, new NetworkInfo(C.POLYGON_TEST_NETWORK, C.POLYGON_SYMBOL,
                     new String[] {FREE_MUMBAI_RPC_URL},
                     "https://mumbai.polygonscan.com/tx/", POLYGON_TEST_ID,
-                    "https://api-testnet.polygonscan.com/api?"));
+                    "https://api-testnet.polygonscan.com/api?")); // Mumbai deprecated, not in V2
             put(POLYGON_AMOY_ID, new NetworkInfo(C.AMOY_TESTNET_NAME, C.AMOY_TESTNET_SYMBOL,
                     CHAIN_CONFIG_RPC.get(POLYGON_AMOY_ID),
                     "https://amoy.polygonscan.com/tx/", POLYGON_AMOY_ID,
-                    "https://api-amoy.polygonscan.com/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=80002&"));
             put(OPTIMISTIC_MAIN_ID, new NetworkInfo(C.OPTIMISTIC_NETWORK, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(OPTIMISTIC_MAIN_ID),
                     "https://optimistic.etherscan.io/tx/", OPTIMISTIC_MAIN_ID,
-                    "https://api-optimistic.etherscan.io/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=10&"));
             put(CRONOS_MAIN_ID, new NetworkInfo(C.CRONOS_MAIN_NETWORK, C.CRONOS_SYMBOL,
                     CHAIN_CONFIG_RPC.get(CRONOS_MAIN_ID),
                     "https://cronos.org/explorer/tx/", CRONOS_MAIN_ID,
@@ -532,7 +637,7 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(ARBITRUM_MAIN_ID, new NetworkInfo(C.ARBITRUM_ONE_NETWORK, C.ARBITRUM_SYMBOL,
                     CHAIN_CONFIG_RPC.get(ARBITRUM_MAIN_ID),
                     "https://arbiscan.io/tx/", ARBITRUM_MAIN_ID,
-                    "https://api.arbiscan.io/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=42161&"));
             put(PALM_ID, new NetworkInfo(C.PALM_NAME, C.PALM_SYMBOL,
                     CHAIN_CONFIG_RPC.get(PALM_ID),
                     "https://explorer.palm.io/tx/", PALM_ID,
@@ -572,11 +677,11 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(SEPOLIA_TESTNET_ID, new NetworkInfo(C.SEPOLIA_TESTNET_NAME, C.SEPOLIA_SYMBOL,
                     CHAIN_CONFIG_RPC.get(SEPOLIA_TESTNET_ID),
                     "https://sepolia.etherscan.io/tx/", SEPOLIA_TESTNET_ID,
-                    "https://api-sepolia.etherscan.io/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=11155111&"));
             put(ARBITRUM_TEST_ID, new NetworkInfo(C.ARBITRUM_TESTNET_NAME, C.ARBITRUM_SYMBOL,
                     CHAIN_CONFIG_RPC.get(ARBITRUM_TEST_ID),
                     "https://testnet.arbiscan.io/tx/", ARBITRUM_TEST_ID,
-                    "https://api-goerli.arbiscan.io/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=421614&"));
             put(OKX_ID, new NetworkInfo(C.OKX_NETWORK_NAME, C.OKX_SYMBOL,
                     CHAIN_CONFIG_RPC.get(OKX_ID),
                 "https://www.oklink.com/en/okc/tx/", OKX_ID,
@@ -593,23 +698,23 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
             put(LINEA_ID, new NetworkInfo(C.LINEA_NAME, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(LINEA_ID),
                     "https://lineascan.build/tx/", LINEA_ID,
-                    "https://api.lineascan.build/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=59144&"));
             put(LINEA_TEST_ID, new NetworkInfo(C.LINEA_TESTNET_NAME, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(LINEA_TEST_ID),
                     "https://sepolia.lineascan.build/tx/", LINEA_TEST_ID,
-                    "https://api-sepolia.lineascan.build/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=59141&"));
             put(HOLESKY_ID, new NetworkInfo(C.HOLESKY_TESTNET_NAME, C.HOLESKY_TEST_SYMBOL,
                     CHAIN_CONFIG_RPC.get(HOLESKY_ID),
                     "https://holesky.etherscan.io/tx/", HOLESKY_ID,
-                    "https://api-holesky.etherscan.io/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=17000&"));
             put(BASE_MAINNET_ID, new NetworkInfo(C.BASE_MAINNET_NAME, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(BASE_MAINNET_ID),
                     "https://basescan.org/tx/", BASE_MAINNET_ID,
-                    "https://api.basescan.org/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=8453&"));
             put(BASE_TESTNET_ID, new NetworkInfo(C.BASE_TESTNET_NAME, C.ETH_SYMBOL,
                     CHAIN_CONFIG_RPC.get(BASE_TESTNET_ID),
                     "https://sepolia.basescan.org/tx/", BASE_TESTNET_ID,
-                    "https://api-sepolia.basescan.org/api?"));
+                    "https://api.etherscan.io/v2/api?chainid=84532&"));
 
             put(MANTLE_MAINNET_ID, new NetworkInfo(C.MANTLE_MAINNET_NAME, C.MANTLE_SYMBOL,
                     CHAIN_CONFIG_RPC.get(MANTLE_MAINNET_ID),
@@ -637,6 +742,36 @@ public abstract class EthereumNetworkBase implements EthereumNetworkRepositoryTy
     //List of network details. Note, the advantage of using LongSparseArray is efficiency and also
     //the entries are automatically sorted into numerical order
     private static final LongSparseArray<NetworkInfo> networkMap = builtinNetworkMap.clone();
+
+    private static synchronized void refreshBuiltInNetworkRpcConfig()
+    {
+        synchronized (rpcConfigLock)
+        {
+            for (int i = 0; i < builtinNetworkMap.size(); i++)
+            {
+                NetworkInfo existing = builtinNetworkMap.valueAt(i);
+                String[] resolvedRpcUrls = getConfiguredRPCUrls(existing.chainId);
+                String[] rpcUrls = resolvedRpcUrls.length > 0 ? resolvedRpcUrls : existing.rpcUrls;
+
+                NetworkInfo refreshed = new NetworkInfo(
+                        existing.name,
+                        existing.symbol,
+                        rpcUrls,
+                        existing.etherscanUrl,
+                        existing.chainId,
+                        existing.etherscanAPI,
+                        existing.isCustom);
+
+                builtinNetworkMap.put(existing.chainId, refreshed);
+
+                NetworkInfo current = networkMap.get(existing.chainId);
+                if (current != null && !current.isCustom)
+                {
+                    networkMap.put(existing.chainId, refreshed);
+                }
+            }
+        }
+    }
 
     private static final LongSparseArray<Integer> chainLogos = new LongSparseArray<Integer>()
     {

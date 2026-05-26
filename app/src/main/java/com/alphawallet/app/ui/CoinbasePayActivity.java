@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.coinbasepay.DestinationWallet;
 import com.alphawallet.app.viewmodel.CoinbasePayViewModel;
@@ -42,8 +41,6 @@ public class CoinbasePayActivity extends BaseActivity
         initViewModel();
 
         initWebView();
-
-        viewModel.track(Analytics.Navigation.COINBASE_PAY);
 
         viewModel.prepare();
     }

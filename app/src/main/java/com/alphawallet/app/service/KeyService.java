@@ -30,7 +30,6 @@ import androidx.annotation.RequiresApi;
 
 import com.alphawallet.app.BuildConfig;
 import com.alphawallet.app.R;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.AuthenticationCallback;
 import com.alphawallet.app.entity.AuthenticationFailType;
 import com.alphawallet.app.entity.CreateWalletCallbackInterface;
@@ -147,7 +146,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
     private CreateWalletCallbackInterface callbackInterface;
     private ImportWalletCallback importCallback;
     private SignAuthenticationCallback signCallback;
-    private final AnalyticsServiceType<AnalyticsProperties> analyticsService;
     private boolean requireAuthentication = false;
 
     private static SecurityStatus securityStatus = SecurityStatus.NOT_CHECKED;
@@ -157,11 +155,10 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         return context;
     }
 
-    public KeyService(Context ctx, AnalyticsServiceType<AnalyticsProperties> analyticsService)
+    public KeyService(Context ctx)
     {
         System.loadLibrary("TrustWalletCore");
         this.context = ctx;
-        this.analyticsService = analyticsService;
         this.hardwareDevice = new HardwareDevice(this);
         checkSecurity();
     }
@@ -464,7 +461,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         catch (ServiceErrorException e)
         {
             //Legacy keystore error
-            if (!BuildConfig.DEBUG) analyticsService.recordException(e);
             e.printStackTrace();
         }
         catch (KeyServiceException e)
@@ -665,7 +661,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         catch (ServiceErrorException e)
         {
             //Legacy keystore error
-            if (!BuildConfig.DEBUG) analyticsService.recordException(e);
             e.printStackTrace();
             return new UpgradeKeyResult(UpgradeKeyResultType.ERROR, e.getLocalizedMessage());
         }
@@ -1159,7 +1154,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         catch (ServiceErrorException e)
         {
             //Legacy keystore error
-            if (!BuildConfig.DEBUG) analyticsService.recordException(e);
             returnSig.failMessage = e.getMessage();
             e.printStackTrace();
         }

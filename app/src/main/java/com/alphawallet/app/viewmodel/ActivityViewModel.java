@@ -9,7 +9,6 @@ import com.alphawallet.app.entity.Transaction;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.interact.FetchTransactionsInteract;
 import com.alphawallet.app.interact.GenericWalletInteract;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.RealmManager;
 import com.alphawallet.app.service.TokensService;
@@ -60,15 +59,13 @@ public class ActivityViewModel extends BaseViewModel
             AssetDefinitionService assetDefinitionService,
             TokensService tokensService,
             TransactionsService transactionsService,
-            RealmManager realmManager,
-            AnalyticsServiceType analyticsService) {
+            RealmManager realmManager) {
         this.genericWalletInteract = genericWalletInteract;
         this.fetchTransactionsInteract = fetchTransactionsInteract;
         this.assetDefinitionService = assetDefinitionService;
         this.tokensService = tokensService;
         this.transactionsService = transactionsService;
         this.realmManager = realmManager;
-        setAnalyticsService(analyticsService);
     }
 
     public void prepare()

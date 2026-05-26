@@ -38,6 +38,8 @@ public interface KeyProvider
 
     String getUnstoppableDomainsKey();
 
+    String getAwApiKey();
+
     String getOkLinkKey();
 
     String getOkLBKey();

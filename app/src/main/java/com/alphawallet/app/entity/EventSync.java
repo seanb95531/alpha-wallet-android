@@ -453,27 +453,40 @@ public class EventSync
                                                                        DefaultBlockParameter endBlock, Realm realm)
             throws IOException, LogOverflowException
     {
-        HashSet<String> txHashes = new HashSet<>();
-        EthFilter receiveFilter = token.getReceiveBalanceFilter(transferEvent, startBlock, endBlock);
-        EthFilter sendFilter    = token.getSendBalanceFilter(transferEvent, startBlock, endBlock);
+        int eventCount = 0;
+        HashSet<BigInteger> rcvTokenIds;
+        HashSet<BigInteger> sendTokenIds;
 
-        Pair<EthLog, EthLog> ethLogs = getTxLogs(web3j, receiveFilter, sendFilter);
-
-        EthLog receiveLogs = ethLogs.first;
-        EthLog sendLogs = ethLogs.second;
-
-        int eventCount = receiveLogs.getLogs().size();
-
-        HashSet<BigInteger> rcvTokenIds = new HashSet<>(token.processLogsAndStoreTransferEvents(receiveLogs, transferEvent, txHashes, realm));
-
-        if (sendLogs.getLogs().size() > eventCount) eventCount = sendLogs.getLogs().size();
-
-        HashSet<BigInteger> sendTokenIds = token.processLogsAndStoreTransferEvents(sendLogs, transferEvent, txHashes, realm);
-
-        //register Transaction fetches
-        for (String txHash : txHashes)
+        try
         {
-            TransactionsService.addTransactionHashFetch(txHash, token.tokenInfo.chainId, token.getWallet());
+            HashSet<String> txHashes = new HashSet<>();
+            EthFilter receiveFilter = token.getReceiveBalanceFilter(transferEvent, startBlock, endBlock);
+            EthFilter sendFilter = token.getSendBalanceFilter(transferEvent, startBlock, endBlock);
+
+            Pair<EthLog, EthLog> ethLogs = getTxLogs(web3j, receiveFilter, sendFilter);
+
+            EthLog receiveLogs = ethLogs.first;
+            EthLog sendLogs = ethLogs.second;
+
+            eventCount = receiveLogs.getLogs().size();
+
+            rcvTokenIds = new HashSet<>(token.processLogsAndStoreTransferEvents(receiveLogs, transferEvent, txHashes, realm));
+
+            if (sendLogs.getLogs().size() > eventCount) eventCount = sendLogs.getLogs().size();
+
+            sendTokenIds = token.processLogsAndStoreTransferEvents(sendLogs, transferEvent, txHashes, realm);
+
+            //register Transaction fetches
+            for (String txHash : txHashes)
+            {
+                TransactionsService.addTransactionHashFetch(txHash, token.tokenInfo.chainId, token.getWallet());
+            }
+        }
+        catch (NullPointerException e)
+        {
+            // this is expected
+            rcvTokenIds = new HashSet<>();
+            sendTokenIds = new HashSet<>();
         }
 
         return new Pair<>(eventCount, new Pair<>(rcvTokenIds, sendTokenIds));

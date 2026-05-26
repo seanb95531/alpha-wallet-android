@@ -115,6 +115,12 @@ public class KeyProviderMockImpl implements KeyProvider
     }
 
     @Override
+    public String getAwApiKey()
+    {
+        return FAKE_KEY_FOR_TESTING;
+    }
+
+    @Override
     public String getOkLinkKey()
     {
         return FAKE_KEY_FOR_TESTING;

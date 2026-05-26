@@ -39,8 +39,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.CustomViewSettings;
 import com.alphawallet.app.entity.DisplayState;
 import com.alphawallet.app.entity.ErrorEnvelope;
@@ -931,9 +929,6 @@ public class TransferTicketDetailActivity extends BaseActivity
     @Override
     public void notifyConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        viewModel.track(Analytics.Action.ACTION_SHEET_COMPLETED, props);
     }
 
     @Override

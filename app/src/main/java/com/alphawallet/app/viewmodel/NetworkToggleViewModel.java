@@ -4,7 +4,6 @@ import com.alphawallet.app.entity.NetworkInfo;
 import com.alphawallet.app.repository.EthereumNetworkRepository;
 import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.TokensService;
 import com.alphawallet.app.ui.widget.entity.NetworkItem;
 
@@ -25,13 +24,11 @@ public class NetworkToggleViewModel extends BaseViewModel
     @Inject
     public NetworkToggleViewModel(EthereumNetworkRepositoryType ethereumNetworkRepositoryType,
                                   TokensService tokensService,
-                                  PreferenceRepositoryType preferenceRepository,
-                                  AnalyticsServiceType analyticsService)
+                                  PreferenceRepositoryType preferenceRepository)
     {
         this.networkRepository = ethereumNetworkRepositoryType;
         this.tokensService = tokensService;
         this.preferenceRepository = preferenceRepository;
-        setAnalyticsService(analyticsService);
     }
 
     public NetworkInfo[] getNetworkList()

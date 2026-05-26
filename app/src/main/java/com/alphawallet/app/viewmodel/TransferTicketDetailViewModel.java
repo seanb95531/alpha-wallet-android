@@ -24,7 +24,6 @@ import com.alphawallet.app.interact.FetchTransactionsInteract;
 import com.alphawallet.app.interact.GenericWalletInteract;
 import com.alphawallet.app.repository.EthereumNetworkRepository;
 import com.alphawallet.app.repository.TokenRepository;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
@@ -86,7 +85,6 @@ public class TransferTicketDetailViewModel extends BaseViewModel implements Tran
                                   FetchTransactionsInteract fetchTransactionsInteract,
                                   AssetDefinitionService assetDefinitionService,
                                   GasService gasService,
-                                  AnalyticsServiceType analyticsService,
                                   TokensService tokensService)
     {
         this.genericWalletInteract = genericWalletInteract;
@@ -96,7 +94,6 @@ public class TransferTicketDetailViewModel extends BaseViewModel implements Tran
         this.assetDefinitionService = assetDefinitionService;
         this.gasService = gasService;
         this.tokensService = tokensService;
-        setAnalyticsService(analyticsService);
     }
 
     public MutableLiveData<TransactionReturn> transactionFinalised()

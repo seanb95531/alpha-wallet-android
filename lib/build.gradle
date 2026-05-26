@@ -11,12 +11,12 @@ dependencies {
 
     testImplementation libs.junit
 
-    implementation libs.bouncycastle.bcprov.jdk15on
+    implementation libs.bouncycastle.bcprov.jdk18on
     // https://mvnrepository.com/artifact/com.github.cliftonlabs/json-simple
     implementation libs.json.simple
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation libs.gson
 }
 
-sourceCompatibility = "17"
-targetCompatibility = "17"
+sourceCompatibility = "21"
+targetCompatibility = "21"

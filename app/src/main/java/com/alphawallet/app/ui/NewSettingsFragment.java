@@ -37,7 +37,6 @@ import androidx.lifecycle.ViewModelProvider;
 import com.alphawallet.app.BuildConfig;
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.BackupOperationType;
 import com.alphawallet.app.entity.CustomViewSettings;
 import com.alphawallet.app.entity.Wallet;
@@ -67,7 +66,6 @@ public class NewSettingsFragment extends BaseFragment
     private SettingsItemView myAddressSetting;
     private SettingsItemView changeWalletSetting;
     private SettingsItemView backUpWalletSetting;
-    private SettingsItemView notificationsSetting;
     private SettingsItemView changeLanguage;
     private SettingsItemView changeCurrency;
     private SettingsItemView biometricsSetting;
@@ -297,13 +295,6 @@ public class NewSettingsFragment extends BaseFragment
                         .withListener(this::onWalletConnectSettingClicked)
                         .build();
 
-        notificationsSetting =
-                new SettingsItemView.Builder(getContext())
-                        .withIcon(R.drawable.ic_settings_notifications)
-                        .withTitle(R.string.title_notifications)
-                        .withListener(this::onNotificationsSettingClicked)
-                        .build();
-
         changeLanguage = new SettingsItemView.Builder(getContext())
                 .withIcon(R.drawable.ic_settings_language)
                 .withTitle(R.string.title_change_language)
@@ -378,8 +369,6 @@ public class NewSettingsFragment extends BaseFragment
 
         if (biometricsSetting != null)
             systemSettingsLayout.addView(biometricsSetting, systemIndex++);
-
-        systemSettingsLayout.addView(notificationsSetting, systemIndex++);
 
         systemSettingsLayout.addView(changeLanguage, systemIndex++);
 
@@ -513,7 +502,6 @@ public class NewSettingsFragment extends BaseFragment
         }
         else
         {
-            viewModel.track(Analytics.Navigation.SETTINGS);
             viewModel.prepare();
         }
     }
@@ -607,12 +595,6 @@ public class NewSettingsFragment extends BaseFragment
     private void onNameThisWallet()
     {
         Intent intent = new Intent(getActivity(), NameThisWalletActivity.class);
-        requireActivity().startActivity(intent);
-    }
-
-    private void onNotificationsSettingClicked()
-    {
-        Intent intent = new Intent(getActivity(), NotificationSettingsActivity.class);
         requireActivity().startActivity(intent);
     }
 

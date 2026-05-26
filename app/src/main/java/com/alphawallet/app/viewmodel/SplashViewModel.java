@@ -15,7 +15,6 @@ import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.WalletType;
 import com.alphawallet.app.interact.FetchWalletsInteract;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.KeyService;
 
 import java.io.File;
@@ -42,13 +41,11 @@ public class SplashViewModel extends BaseViewModel
     SplashViewModel(
         FetchWalletsInteract fetchWalletsInteract,
         PreferenceRepositoryType preferenceRepository,
-        KeyService keyService,
-        AnalyticsServiceType analyticsService)
+        KeyService keyService)
     {
         this.fetchWalletsInteract = fetchWalletsInteract;
         this.preferenceRepository = preferenceRepository;
         this.keyService = keyService;
-        setAnalyticsService(analyticsService);
         // increase launch count
 //        this.preferenceRepository.incrementLaunchCount();
     }

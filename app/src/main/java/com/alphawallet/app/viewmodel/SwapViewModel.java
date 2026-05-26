@@ -21,7 +21,6 @@ import com.alphawallet.app.entity.lifi.Token;
 import com.alphawallet.app.interact.CreateTransactionInteract;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
 import com.alphawallet.app.repository.SwapRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
@@ -93,7 +92,6 @@ public class SwapViewModel extends BaseViewModel implements TransactionSendHandl
             SwapService swapService,
             CreateTransactionInteract createTransactionInteract,
             KeyService keyService,
-            AnalyticsServiceType analyticsService,
             GasService gasService)
     {
         this.assetDefinitionService = assetDefinitionService;
@@ -104,7 +102,6 @@ public class SwapViewModel extends BaseViewModel implements TransactionSendHandl
         this.createTransactionInteract = createTransactionInteract;
         this.keyService = keyService;
         this.gasService = gasService;
-        setAnalyticsService(analyticsService);
     }
 
     public AssetDefinitionService getAssetDefinitionService()

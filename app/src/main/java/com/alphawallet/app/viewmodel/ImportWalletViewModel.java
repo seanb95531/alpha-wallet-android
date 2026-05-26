@@ -16,7 +16,6 @@ import com.alphawallet.app.entity.Operation;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.interact.ImportWalletInteract;
 import com.alphawallet.app.repository.TokenRepository;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.KeyService;
 import com.alphawallet.app.ui.widget.OnSetWatchWalletListener;
 import com.alphawallet.app.util.ens.AWEnsResolver;
@@ -49,13 +48,11 @@ public class ImportWalletViewModel extends BaseViewModel implements OnSetWatchWa
     private final MutableLiveData<String> watchExists = new MutableLiveData<>();
 
     @Inject
-    ImportWalletViewModel(ImportWalletInteract importWalletInteract, KeyService keyService,
-                          AnalyticsServiceType analyticsService)
+    ImportWalletViewModel(ImportWalletInteract importWalletInteract, KeyService keyService)
     {
         this.importWalletInteract = importWalletInteract;
         this.keyService = keyService;
         this.ensResolver = new AWEnsResolver(TokenRepository.getWeb3jService(MAINNET_ID), keyService.getContext());
-        setAnalyticsService(analyticsService);
     }
 
     public void onKeystore(String keystore, String password, String newPassword, KeyService.AuthenticationLevel level)

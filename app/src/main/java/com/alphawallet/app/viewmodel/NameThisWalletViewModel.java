@@ -13,7 +13,6 @@ import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.interact.GenericWalletInteract;
 import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.repository.WalletItem;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.util.ens.AWEnsResolver;
 import com.alphawallet.app.util.ens.EnsResolver;
 
@@ -42,12 +41,10 @@ public class NameThisWalletViewModel extends BaseViewModel
     @Inject
     NameThisWalletViewModel(
             GenericWalletInteract genericWalletInteract,
-            @ApplicationContext Context context,
-            AnalyticsServiceType analyticsService)
+            @ApplicationContext Context context)
     {
         this.genericWalletInteract = genericWalletInteract;
         this.ensResolver = new AWEnsResolver(TokenRepository.getWeb3jService(MAINNET_ID), context);
-        setAnalyticsService(analyticsService);
     }
 
     @Override

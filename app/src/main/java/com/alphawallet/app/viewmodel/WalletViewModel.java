@@ -52,7 +52,6 @@ import com.alphawallet.app.router.CoinbasePayRouter;
 import com.alphawallet.app.router.ManageWalletsRouter;
 import com.alphawallet.app.router.MyAddressRouter;
 import com.alphawallet.app.router.TokenDetailRouter;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.RealmManager;
 import com.alphawallet.app.service.TokensService;
@@ -131,7 +130,6 @@ public class WalletViewModel extends BaseViewModel
             PreferenceRepositoryType preferenceRepository,
             RealmManager realmManager,
             OnRampRepositoryType onRampRepository,
-            AnalyticsServiceType analyticsService,
             AWWalletConnectClient awWalletConnectClient)
     {
         this.fetchTokensInteract = fetchTokensInteract;
@@ -147,7 +145,6 @@ public class WalletViewModel extends BaseViewModel
         this.realmManager = realmManager;
         this.onRampRepository = onRampRepository;
         this.awWalletConnectClient = awWalletConnectClient;
-        setAnalyticsService(analyticsService);
     }
 
     public LiveData<TokenCardMeta[]> tokens()

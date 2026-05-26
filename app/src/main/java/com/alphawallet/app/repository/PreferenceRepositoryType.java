@@ -131,10 +131,6 @@ public interface PreferenceRepositoryType
 
     void logIn(String address);
 
-    void setFirebaseMessagingToken(String token);
-
-    String getFirebaseMessagingToken();
-
     boolean isTransactionNotificationsEnabled(String address);
 
     void setTransactionNotificationEnabled(String address, boolean isEnabled);

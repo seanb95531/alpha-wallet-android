@@ -13,7 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.ui.widget.adapter.MultiSelectNetworkAdapter;
 import com.alphawallet.app.ui.widget.entity.NetworkItem;
 import com.alphawallet.app.viewmodel.NetworkToggleViewModel;
@@ -47,7 +46,6 @@ public class NetworkToggleActivity extends NetworkBaseActivity
     {
         super.onResume();
         setupFilterList();
-        viewModel.track(Analytics.Navigation.SELECT_NETWORKS);
     }
 
     private void setupFilterList()

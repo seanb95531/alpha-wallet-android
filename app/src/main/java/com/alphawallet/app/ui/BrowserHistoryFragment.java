@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.DApp;
 import com.alphawallet.app.ui.widget.OnDappClickListener;
 import com.alphawallet.app.ui.widget.adapter.BrowserHistoryAdapter;
@@ -76,7 +75,6 @@ public class BrowserHistoryFragment extends BaseFragment
     public void onResume()
     {
         super.onResume();
-        viewModel.track(Analytics.Navigation.BROWSER_HISTORY);
     }
 
     @Override

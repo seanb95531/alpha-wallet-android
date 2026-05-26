@@ -11,8 +11,6 @@ import android.util.Pair;
 import androidx.annotation.Nullable;
 
 import com.alphawallet.app.BuildConfig;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.ContractLocator;
 import com.alphawallet.app.entity.ContractType;
 import com.alphawallet.app.entity.CustomViewSettings;
@@ -79,7 +77,6 @@ public class TokensService
     private final TickerService tickerService;
     private final OpenSeaService openseaService;
     private final OkHttpClient httpClient;
-    private final AnalyticsServiceType<AnalyticsProperties> analyticsService;
     private final List<Long> networkFilter;
     private ContractLocator focusToken;
     private final ConcurrentLinkedDeque<ContractAddress> unknownTokens;
@@ -121,13 +118,11 @@ public class TokensService
                          TokenRepositoryType tokenRepository,
                          TickerService tickerService,
                          OpenSeaService openseaService,
-                         AnalyticsServiceType<AnalyticsProperties> analyticsService,
                          OkHttpClient httpClient) {
         this.ethereumNetworkRepository = ethereumNetworkRepository;
         this.tokenRepository = tokenRepository;
         this.tickerService = tickerService;
         this.openseaService = openseaService;
-        this.analyticsService = analyticsService;
         networkFilter = new ArrayList<>();
         setupFilter(ethereumNetworkRepository.hasSetNetworkFilters());
         focusToken = null;
@@ -1236,20 +1231,6 @@ public class TokensService
         appHasFocus = false;
     }
 
-    /**
-     * Notify that the new gas setting widget was actually used :)
-     *
-     * @param gasSpeed
-     */
-    public void track(String gasSpeed)
-    {
-        if (analyticsService != null)
-        {
-            AnalyticsProperties analyticsProperties = new AnalyticsProperties();
-            analyticsProperties.put(Analytics.PROPS_GAS_SPEED, gasSpeed);
-            analyticsService.track(Analytics.Action.USE_GAS_WIDGET.getValue(), analyticsProperties);
-        }
-    }
 
     @NotNull
     public Token getTokenOrBase(long chainId, String address)

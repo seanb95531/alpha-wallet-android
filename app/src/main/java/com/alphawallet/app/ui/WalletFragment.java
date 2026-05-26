@@ -41,7 +41,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.BackupOperationType;
 import com.alphawallet.app.entity.ContractLocator;
 import com.alphawallet.app.entity.ContractType;
@@ -543,7 +542,6 @@ public class WalletFragment extends BaseFragment implements
         buyEthOptionsView.setOnBuyWithRampListener(v -> {
             Intent intent = viewModel.getBuyIntent(getCurrentWallet().address);
             ((HomeActivity) getActivity()).onActivityResult(C.TOKEN_SEND_ACTIVITY, RESULT_OK, intent);
-            viewModel.track(Analytics.Action.BUY_WITH_RAMP);
             buyEthDialog.dismiss();
         });
         buyEthOptionsView.setOnBuyWithCoinbasePayListener(v -> {
@@ -572,7 +570,6 @@ public class WalletFragment extends BaseFragment implements
         }
         else
         {
-            viewModel.track(Analytics.Navigation.WALLET);
             if (largeTitleView != null)
             {
                 largeTitleView.setVisibility(View.VISIBLE); //show or hide Fiat summary

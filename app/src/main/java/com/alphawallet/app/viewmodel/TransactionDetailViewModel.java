@@ -28,7 +28,6 @@ import com.alphawallet.app.repository.TokenRepositoryType;
 import com.alphawallet.app.repository.TransactionsRealmCache;
 import com.alphawallet.app.repository.entity.RealmTransaction;
 import com.alphawallet.app.router.ExternalBrowserRouter;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
 import com.alphawallet.app.service.TokensService;
@@ -91,8 +90,7 @@ public class TransactionDetailViewModel extends BaseViewModel implements Transac
         FetchTransactionsInteract fetchTransactionsInteract,
         KeyService keyService,
         GasService gasService,
-        CreateTransactionInteract createTransactionInteract,
-        AnalyticsServiceType analyticsService)
+        CreateTransactionInteract createTransactionInteract)
     {
         this.genericWalletInteract = genericWalletInteract;
         this.networkInteract = findDefaultNetworkInteract;
@@ -103,7 +101,6 @@ public class TransactionDetailViewModel extends BaseViewModel implements Transac
         this.keyService = keyService;
         this.gasService = gasService;
         this.createTransactionInteract = createTransactionInteract;
-        setAnalyticsService(analyticsService);
     }
 
     public LiveData<Wallet> wallet()

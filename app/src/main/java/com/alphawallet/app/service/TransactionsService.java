@@ -608,7 +608,7 @@ public class TransactionsService
         {
             blockNumber = fetchedTx.getBlockNumber();
         }
-        catch (MessageDecodingException e)
+        catch (MessageDecodingException | NullPointerException e)
         {
             blockNumber = BigInteger.valueOf(-1);
         }

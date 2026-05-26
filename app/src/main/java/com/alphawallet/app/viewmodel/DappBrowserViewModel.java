@@ -19,7 +19,6 @@ import androidx.preference.PreferenceManager;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.DApp;
 import com.alphawallet.app.entity.GasEstimate;
 import com.alphawallet.app.entity.NetworkInfo;
@@ -32,7 +31,6 @@ import com.alphawallet.app.entity.analytics.QrScanSource;
 import com.alphawallet.app.interact.CreateTransactionInteract;
 import com.alphawallet.app.interact.GenericWalletInteract;
 import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
@@ -95,8 +93,7 @@ public class DappBrowserViewModel extends BaseViewModel implements TransactionSe
             TokensService tokensService,
             EthereumNetworkRepositoryType ethereumNetworkRepository,
             KeyService keyService,
-            GasService gasService,
-            AnalyticsServiceType analyticsService)
+            GasService gasService)
     {
         this.genericWalletInteract = genericWalletInteract;
         this.assetDefinitionService = assetDefinitionService;
@@ -105,7 +102,6 @@ public class DappBrowserViewModel extends BaseViewModel implements TransactionSe
         this.ethereumNetworkRepository = ethereumNetworkRepository;
         this.keyService = keyService;
         this.gasService = gasService;
-        setAnalyticsService(analyticsService);
     }
 
     public AssetDefinitionService getAssetDefinitionService()
@@ -200,7 +196,6 @@ public class DappBrowserViewModel extends BaseViewModel implements TransactionSe
 
     public void share(Context context, String url)
     {
-        track(Analytics.Action.SHARE_URL);
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_SEND);
         intent.putExtra(Intent.EXTRA_TEXT, url);
@@ -214,7 +209,6 @@ public class DappBrowserViewModel extends BaseViewModel implements TransactionSe
         webView.clearCache(true);
         Toast.makeText(context, context.getString(R.string.toast_browser_cache_cleared),
                 Toast.LENGTH_SHORT).show();
-        track(Analytics.Action.CLEAR_BROWSER_CACHE);
     }
 
     public void startScan(Activity activity)

@@ -1,6 +1,5 @@
 package com.alphawallet.app.service;
 
-import static com.alphawallet.app.entity.tokenscript.TokenscriptFunction.ZERO_ADDRESS;
 import static com.alphawallet.ethereum.EthereumNetworkBase.ARBITRUM_MAIN_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.AURORA_MAINNET_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.AVALANCHE_ID;
@@ -10,7 +9,6 @@ import static com.alphawallet.ethereum.EthereumNetworkBase.CLASSIC_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.CRONOS_MAIN_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.FANTOM_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.GNOSIS_ID;
-import static com.alphawallet.ethereum.EthereumNetworkBase.HOLESKY_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.IOTEX_MAINNET_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.KLAYTN_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.LINEA_ID;
@@ -20,18 +18,14 @@ import static com.alphawallet.ethereum.EthereumNetworkBase.MILKOMEDA_C1_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.OKX_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.OPTIMISTIC_MAIN_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.POLYGON_ID;
-import static com.alphawallet.ethereum.EthereumNetworkBase.POLYGON_TEST_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.ROOTSTOCK_MAINNET_ID;
-import static org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction;
 
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.alphawallet.app.entity.ticker.CoinGeckoTicker;
-import com.alphawallet.app.entity.ticker.TNDiscoveryTicker;
-import com.alphawallet.app.entity.DexGuruTicker;
 import com.alphawallet.app.entity.tokendata.TokenTicker;
 import com.alphawallet.app.entity.tokens.Token;
 import com.alphawallet.app.entity.tokens.TokenCardMeta;
@@ -40,40 +34,24 @@ import com.alphawallet.app.repository.KeyProvider;
 import com.alphawallet.app.repository.KeyProviderFactory;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
 import com.alphawallet.app.repository.TokenLocalSource;
-import com.alphawallet.app.repository.TokenRepository;
 import com.alphawallet.app.repository.TokensRealmSource;
 import com.alphawallet.app.util.BalanceUtils;
-import com.alphawallet.token.entity.ContractAddress;
-import com.alphawallet.token.entity.EthereumReadBuffer;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import org.web3j.abi.FunctionEncoder;
-import org.web3j.abi.FunctionReturnDecoder;
-import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.DynamicArray;
-import org.web3j.abi.datatypes.Function;
-import org.web3j.abi.datatypes.Type;
-import org.web3j.abi.datatypes.generated.Uint256;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -81,24 +59,22 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import timber.log.Timber;
 
 public class TickerService
 {
     private static final int UPDATE_TICKER_CYCLE = 5; //5 Minutes
-    private static final String MEDIANIZER = "0x729D19f657BD0614b4985Cf1D82531c67569197B";
-    private static final String MARKET_ORACLE_CONTRACT = "0x40805417CD347dB17829725C74b8E5990dC251d8";
     private static final String CONTRACT_ADDR = "[CONTRACT_ADDR]";
     private static final String CHAIN_IDS = "[CHAIN_ID]";
     private static final String CURRENCY_TOKEN = "[CURRENCY]";
     private static final String COINGECKO_CHAIN_CALL = "https://api.coingecko.com/api/v3/simple/price?ids=" + CHAIN_IDS + "&vs_currencies=" + CURRENCY_TOKEN + "&include_24hr_change=true";
     private static final String COINGECKO_API = String.format("https://api.coingecko.com/api/v3/simple/token_price/%s?contract_addresses=%s&vs_currencies=%s&include_24hr_change=true",
             CHAIN_IDS, CONTRACT_ADDR, CURRENCY_TOKEN);
-    private static final String TOKEN_DISCOVERY_API = String.format("https://api.token-discovery.tokenscript.org/get-raw-token-price?blockchain=evm&smartContract=%s&chain=%s",
-            CONTRACT_ADDR, CHAIN_IDS);
     private static final int    COINGECKO_MAX_FETCH = 10;
     private static final String DEXGURU_API = "https://api.dex.guru/v1/tokens/" + CONTRACT_ADDR + "-" + CHAIN_IDS;
     private static final String CURRENCY_CONV = "currency";
@@ -113,17 +89,17 @@ public class TickerService
     private double currentConversionRate = 0.0;
     private static String currentCurrencySymbolTxt;
     private static String currentCurrencySymbol;
-    private static final ConcurrentLinkedDeque<TokenCardMeta> tokenCheckQueue = new ConcurrentLinkedDeque<>();
-    private static final ConcurrentLinkedDeque<ContractAddress> secondaryCheckQueue = new ConcurrentLinkedDeque<>();
-    private static final Map<String, TokenCardMeta> dexGuruQuery = new ConcurrentHashMap<>();
     private static long lastTickerUpdate;
     private static int keyCycle = 0;
+    private static final String AW_HOST = "percolate.one:8088";//"192.168.50.206:8088";// "percolate.one:8088";
+    private static final String FULL_AW_HOST = "https://" + AW_HOST;//"https://" + AW_HOST;
+    private static final int AW_API_BATCH_SIZE = 20;
+
+    /** Chain ID -> addresses the AW API doesn't have (no entry returned). Skip these in future requests. */
+    private static final Map<Long, Set<String>> awApiTokensNotFound = new ConcurrentHashMap<>();
 
     @Nullable
     private Disposable tickerUpdateTimer;
-
-    @Nullable
-    private Disposable erc20TickerCheck;
 
     @Nullable
     private Disposable mainTickerUpdate;
@@ -176,7 +152,7 @@ public class TickerService
     private void tickerUpdate()
     {
         mainTickerUpdate = updateCurrencyConversion()
-                .flatMap(this::updateTickersFromOracle)
+                .flatMap(this::fetchChainsFromAwApi)
                 .flatMap(this::fetchTickersSeparatelyIfRequired)
                 .map(this::checkTickers)
                 .subscribeOn(Schedulers.io())
@@ -266,87 +242,117 @@ public class TickerService
         });
     }
 
-    private Single<Integer> updateTickersFromOracle(double conversionRate)
+    /**
+     * Fetches base chain tickers (ETH, MATIC, etc.) from AW API.
+     * Falls back to CoinGecko for any chains not returned.
+     */
+    private Single<Integer> fetchChainsFromAwApi(double conversionRate)
     {
         resetTickerUpdate();
         currentConversionRate = conversionRate;
+
+        if (TextUtils.isEmpty(keyProvider.getAwApiKey()))
+        {
+            return Single.fromCallable(() -> 0);
+        }
+
         return Single.fromCallable(() -> {
-            int tickerSize = 0;
-            final Web3j web3j = TokenRepository.getWeb3jService(HOLESKY_ID);
-            //fetch current tickers
-            Function function = getTickers();
-            String responseValue = callSmartContractFunction(web3j, function, MARKET_ORACLE_CONTRACT);
-            List<Type> responseValues = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
+            List<Long> chainIds = new ArrayList<>(chainPairs.keySet());
+            JSONObject body = getJsonObjectForChains(chainIds);
 
-            if (!responseValues.isEmpty())
+            RequestBody requestBody = RequestBody.create(
+                    body.toString(),
+                    MediaType.parse("application/json"));
+
+            Request request = new Request.Builder()
+                    .url(FULL_AW_HOST + "/chains")
+                    .post(requestBody)
+                    .build();
+
+            try (okhttp3.Response response = httpClient.newCall(request).execute())
             {
-                Type T = responseValues.get(0);
-                List<Uint256> values = (List) T.getValue();
-                long tickerUpdateTime = values.get(0).getValue().longValue() * 1000L;
-
-                if ((System.currentTimeMillis() - tickerUpdateTime) < TICKER_STALE_TIMEOUT)
+                if (response.code() / 100 != 2 || response.body() == null)
                 {
-                    for (int i = 1; i < values.size(); i++)
-                    {
-                        //decode ticker values and populate
-                        BigInteger tickerInfo = values.get(i).getValue();
-                        addToTokenTickers(tickerInfo, tickerUpdateTime);
-                        tickerSize++;
-                    }
+                    return 0;
+                }
+
+                JSONObject json = new JSONObject(response.body().string());
+                JSONArray results = json.getJSONArray("results");
+
+                for (int i = 0; i < results.length(); i++)
+                {
+                    JSONObject item = results.getJSONObject(i);
+                    if (item.has("error")) continue;
+
+                    long chainId = item.optLong("chain", item.optLong("chainId", -1));
+                    if (chainId < 0) continue;
+
+                    double thisPrice = parseDouble(item.optString("price", "0"));
+                    double change24h = parseDouble(item.optString("change24h", "0"));
+
+                    TokenTicker tTicker = new TokenTicker(
+                            String.valueOf(thisPrice * currentConversionRate),
+                            String.valueOf(change24h),
+                            currentCurrencySymbolTxt, "", System.currentTimeMillis());
+
+                    ethTickers.put(chainId, tTicker);
+                    checkPeggedTickers(chainId, tTicker);
                 }
             }
+            catch (Exception e)
+            {
+                Timber.e(e);
+            }
 
-            return tickerSize;
+            return ethTickers.size();
         });
     }
 
-    private boolean alreadyInQueue(TokenCardMeta tcm)
+    private double parseDouble(String value)
     {
-        for (TokenCardMeta thisTcm : tokenCheckQueue)
+        if (TextUtils.isEmpty(value)) return 0.0;
+        try
         {
-            if (tcm.tokenId.equalsIgnoreCase(thisTcm.tokenId))
-            {
-                return true;
-            }
+            // Replace all characters except digits, decimal point, and minus sign
+            String cleanValue = value.replaceAll("[^\\d.-]", "");
+            return Double.parseDouble(cleanValue);
         }
-
-        return dexGuruQuery.containsKey(tcm.tokenId);
+        catch (NumberFormatException e)
+        {
+            return 0.0;
+        }
     }
 
-    private List<TokenCardMeta> nextTickerSet(int count)
+    @NonNull
+    private JSONObject getJsonObjectForChains(List<Long> chainIds) throws JSONException
     {
-        List<TokenCardMeta> tickerList = new ArrayList<>(count);
-        long chainId = 0;
-        if (!tokenCheckQueue.isEmpty())
+        JSONArray chainsArray = new JSONArray();
+        for (Long chainId : chainIds)
         {
-            List<TokenCardMeta> addBack = new ArrayList<>();
-            TokenCardMeta firstTcm = tokenCheckQueue.removeFirst();
-            chainId = firstTcm.getChain();
-            tickerList.add(firstTcm);
-            count--;
-
-            while (!tokenCheckQueue.isEmpty() && count > 0)
-            {
-                TokenCardMeta tcm = tokenCheckQueue.removeFirst();
-                if (tcm.getChain() == chainId)
-                {
-                    tickerList.add(tcm);
-                    count--;
-                }
-                else
-                {
-                    addBack.add(tcm);
-                }
-            }
-
-            //Add back in any other TCM from other chainIds
-            for (TokenCardMeta tcm : addBack)
-            {
-                tokenCheckQueue.addFirst(tcm);
-            }
+            chainsArray.put(chainId);
         }
 
-        return tickerList;
+        long unixMinutes = System.currentTimeMillis() / 60000;
+        String chainsStr = chainsArray.toString().replaceAll("[\\[\\]\"\\s]", "");
+        String paramStr = "chains:[" + chainsStr + "]";
+        String message = AW_HOST + "/chains/" + paramStr + "/" + unixMinutes;
+
+        Timber.d("AW API chains message: %s", message);
+
+        Credentials credentials = Credentials.create(keyProvider.getAwApiKey());
+        Sign.SignatureData signatureData = Sign.signPrefixedMessage(
+                message.getBytes(), credentials.getEcKeyPair());
+
+        byte[] sigBytes = new byte[65];
+        System.arraycopy(signatureData.getR(), 0, sigBytes, 0, 32);
+        System.arraycopy(signatureData.getS(), 0, sigBytes, 32, 32);
+        System.arraycopy(signatureData.getV(), 0, sigBytes, 64, 1);
+        String sig = Numeric.toHexStringNoPrefix(sigBytes);
+
+        JSONObject body = new JSONObject();
+        body.put("chains", chainsArray);
+        body.put("sig", sig);
+        return body;
     }
 
     public Single<Integer> syncERC20Tickers(long chainId, List<TokenCardMeta> erc20Tokens)
@@ -359,69 +365,139 @@ public class TickerService
 
         Map<String, Long> currentTickerMap = localSource.getTickerTimeMap(chainId, erc20Tokens);
 
-        //determine whether to add to checking queue
+        List<TokenCardMeta> tokensNeedingTickers = new ArrayList<>();
         for (TokenCardMeta tcm : erc20Tokens)
         {
-            if (!currentTickerMap.containsKey(tcm.getAddress())
-                && !alreadyInQueue(tcm))
+            if (!currentTickerMap.containsKey(tcm.getAddress()))
             {
-                tokenCheckQueue.addLast(tcm);
+                tokensNeedingTickers.add(tcm);
             }
         }
 
-        if (tokenCheckQueue.isEmpty())
+        if (tokensNeedingTickers.isEmpty())
         {
             return Single.fromCallable(() -> 0);
         }
-        else
-        {
-            return Single.fromCallable(this::beginTickerCheck);
-        }
+
+        return fetchAwApiTickersInBatches(chainId, tokensNeedingTickers)
+                .flatMap(awTickers -> fetchCoinGeckoFallbackIfNeeded(chainId, tokensNeedingTickers, awTickers))
+                .map(tickers -> {
+                    if (!tickers.isEmpty())
+                    {
+                        localSource.updateERC20Tickers(chainId, tickers);
+                    }
+                    return tickers.size();
+                })
+                .subscribeOn(Schedulers.io());
     }
 
-    private int beginTickerCheck()
+    /**
+     * Fetches tickers from AW API in batches of 20 tokens per call.
+     * Skips addresses we already know the service doesn't have.
+     */
+    private Single<Map<String, TokenTicker>> fetchAwApiTickersInBatches(long chainId, List<TokenCardMeta> tokens)
     {
-        if (!tokenCheckQueue.isEmpty() && (erc20TickerCheck == null || erc20TickerCheck.isDisposed()))
+        if (TextUtils.isEmpty(keyProvider.getAwApiKey()))
         {
-            erc20TickerCheck = Observable.interval(2, 2, TimeUnit.SECONDS)
-                    .doOnNext(l -> checkTokenDiscoveryTickers()).subscribe();
+            return Single.fromCallable(HashMap::new);
         }
 
-        return tokenCheckQueue.size();
-    }
-
-    private void stopTickerCheck()
-    {
-        if (erc20TickerCheck != null && !erc20TickerCheck.isDisposed())
+        Set<String> notFound = getAwApiTokensNotFoundForChain(chainId);
+        List<TokenCardMeta> tokensToFetch = new ArrayList<>();
+        for (TokenCardMeta tcm : tokens)
         {
-            erc20TickerCheck.dispose();
-            erc20TickerCheck = null;
-        }
-    }
-
-    private long getChainId(List<TokenCardMeta> erc20Tokens)
-    {
-        long chainId = 0;
-        if (!erc20Tokens.isEmpty())
-        {
-            chainId = erc20Tokens.get(0).getChain();
+            String addr = tcm.getAddress().toLowerCase();
+            if (!notFound.contains(addr))
+            {
+                tokensToFetch.add(tcm);
+            }
         }
 
-        return chainId;
-    }
+        if (tokensToFetch.isEmpty())
+        {
+            return Single.fromCallable(HashMap::new);
+        }
 
-    //call API using a Single and return a mapping of TokenTickers to a separate method
-    private Single<Map<String, TokenTicker>> fetchTickers(TokenCardMeta tcm)
-    {
         return Single.fromCallable(() -> {
-            final String apiChainName = coinGeckoChainIdToAPIName.get(tcm.getChain());
-            Map<String, TokenTicker> tickersMap = new HashMap<>(); //empty array of tickers
+            Map<String, TokenTicker> allTickers = new HashMap<>();
+            for (int i = 0; i < tokensToFetch.size(); i += AW_API_BATCH_SIZE)
+            {
+                int end = Math.min(i + AW_API_BATCH_SIZE, tokensToFetch.size());
+                List<TokenCardMeta> batch = tokensToFetch.subList(i, end);
+                Map<String, TokenTicker> batchTickers = fetchAwApiTickersBatch(batch, chainId);
+                recordAwApiTokensNotFound(chainId, batch, batchTickers);
+                allTickers.putAll(batchTickers);
+            }
+            return allTickers;
+        }).subscribeOn(Schedulers.io());
+    }
 
-            //fetch the ticker and process the result
-            Request.Builder buildRequestTN = new Request.Builder()
-                    .url(TOKEN_DISCOVERY_API.replace(CHAIN_IDS, apiChainName).replace(CONTRACT_ADDR, tcm.getContractAddress().address)).get();
+    private Set<String> getAwApiTokensNotFoundForChain(long chainId)
+    {
+        return awApiTokensNotFound.computeIfAbsent(chainId, k -> ConcurrentHashMap.newKeySet());
+    }
 
-            try (okhttp3.Response response = httpClient.newCall(buildRequestTN.build())
+    /**
+     * Records addresses we requested but the AW API didn't return (no entry = doesn't have it).
+     */
+    private void recordAwApiTokensNotFound(long chainId, List<TokenCardMeta> requested, Map<String, TokenTicker> received)
+    {
+        Set<String> notFound = getAwApiTokensNotFoundForChain(chainId);
+        for (TokenCardMeta tcm : requested)
+        {
+            String addr = tcm.getAddress().toLowerCase();
+            if (!received.containsKey(addr))
+            {
+                notFound.add(addr);
+            }
+        }
+    }
+
+    /**
+     * Fallback to CoinGecko for tokens not found in AW API response.
+     * Kept for users who want to build their own without AW API access.
+     */
+    private Single<Map<String, TokenTicker>> fetchCoinGeckoFallbackIfNeeded(long chainId,
+            List<TokenCardMeta> tokensNeedingTickers, Map<String, TokenTicker> awTickers)
+    {
+        List<TokenCardMeta> missingTokens = new ArrayList<>();
+        for (TokenCardMeta tcm : tokensNeedingTickers)
+        {
+            String addr = tcm.getAddress().toLowerCase();
+            if (!awTickers.containsKey(addr) && coinGeckoChainIdToAPIName.containsKey(chainId))
+            {
+                missingTokens.add(tcm);
+            }
+        }
+        if (missingTokens.isEmpty())
+        {
+            return Single.just(awTickers);
+        }
+        return fetchCoinGeckoTokenPrices(chainId, missingTokens)
+                .map(cgTickers -> {
+                    Map<String, TokenTicker> merged = new HashMap<>(awTickers);
+                    merged.putAll(cgTickers);
+                    return merged;
+                })
+                .onErrorReturnItem(awTickers);
+    }
+
+    private Map<String, TokenTicker> fetchAwApiTickersBatch(List<TokenCardMeta> batch, long chainId)
+    {
+        Map<String, TokenTicker> tickersMap = new HashMap<>();
+        try
+        {
+            JSONObject body = getJsonObjectForBatch(batch, chainId);
+
+            RequestBody requestBody = RequestBody.create(
+                    body.toString(),
+                    MediaType.parse("application/json"));
+
+            Request.Builder buildRequest = new Request.Builder()
+                    .url(FULL_AW_HOST + "/tokens")
+                    .post(requestBody);
+
+            try (okhttp3.Response response = httpClient.newCall(buildRequest.build())
                     .execute())
             {
                 int code = response.code();
@@ -430,39 +506,117 @@ public class TickerService
                     return tickersMap;
                 }
 
-                JSONArray result = new JSONArray(response.body().string());
-                TNDiscoveryTicker.toTokenTickers(tickersMap, result, currentCurrencySymbolTxt, currentConversionRate);
-            }
-            catch (Exception e)
-            {
-                Timber.e(e);
-            }
+                JSONObject json = new JSONObject(response.body().string());
+                JSONArray results = json.getJSONArray("results");
 
-            return tickersMap;
-        });
-    }
+                for (int i = 0; i < results.length(); i++)
+                {
+                    JSONObject item = results.getJSONObject(i);
+                    if (item.has("error")) continue;
 
-    private void checkTokenDiscoveryTickers()
-    {
-        TokenCardMeta thisTCM = tokenCheckQueue.pollFirst();
-        if (thisTCM == null)
+                    String address = item.getString("address").toLowerCase();
+                    double thisPrice = parseDouble(item.optString("price", "0"));
+                    double change24h = parseDouble(item.optString("change24h", "0"));
+
+                    TokenTicker tTicker = new TokenTicker(String.valueOf(thisPrice * currentConversionRate),
+                            String.valueOf(change24h), currentCurrencySymbolTxt, "", System.currentTimeMillis());
+
+                    tickersMap.put(address, tTicker);
+                }
+            }
+        }
+        catch (Exception e)
         {
-            //terminate the check cycle
-            if (erc20TickerCheck != null && !erc20TickerCheck.isDisposed()) erc20TickerCheck.dispose();
-            return;
+            Timber.e(e);
         }
 
-        fetchTickers(thisTCM)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe(tickers -> {
-                    //process ticker
-                    if (!tickers.isEmpty())
+        return tickersMap;
+    }
+
+    @NonNull
+    private JSONObject getJsonObjectForBatch(List<TokenCardMeta> batch, long chainId) throws JSONException
+    {
+        JSONArray addressArray = new JSONArray();
+        for (TokenCardMeta tcm : batch)
+        {
+            addressArray.put(tcm.getAddress().toLowerCase());
+        }
+
+        long unixMinutes = System.currentTimeMillis() / 60000;
+        String paramStr = "addresses:" + addressArray.toString().replaceAll("[\"\\s]", "")
+                + ",chain:" + chainId;
+        String message = AW_HOST + "/tokens/" + paramStr + "/" + unixMinutes;
+
+        Timber.d("AW API message: %s", message);
+
+        // Sign with EIP-191 personal_sign
+        Credentials credentials = Credentials.create(keyProvider.getAwApiKey());
+        Sign.SignatureData signatureData = Sign.signPrefixedMessage(
+                message.getBytes(), credentials.getEcKeyPair());
+
+        byte[] sigBytes = new byte[65];
+        System.arraycopy(signatureData.getR(), 0, sigBytes, 0, 32);
+        System.arraycopy(signatureData.getS(), 0, sigBytes, 32, 32);
+        System.arraycopy(signatureData.getV(), 0, sigBytes, 64, 1);
+        String sig = Numeric.toHexStringNoPrefix(sigBytes);
+
+        JSONObject body = new JSONObject();
+        body.put("chain", chainId);
+        body.put("addresses", addressArray);
+        body.put("sig", sig);
+        return body;
+    }
+
+    /**
+     * CoinGecko fallback for ERC20 token prices. Used when AW API returns no data or for forks.
+     */
+    private Single<Map<String, TokenTicker>> fetchCoinGeckoTokenPrices(long chainId, List<TokenCardMeta> tokens)
+    {
+        String apiChainName = coinGeckoChainIdToAPIName.get(chainId);
+        if (apiChainName == null) return Single.just(new HashMap<>());
+
+        return Single.fromCallable(() -> {
+            Map<String, TokenTicker> tickersMap = new HashMap<>();
+            for (int i = 0; i < tokens.size(); i += COINGECKO_MAX_FETCH)
+            {
+                int end = Math.min(i + COINGECKO_MAX_FETCH, tokens.size());
+                List<TokenCardMeta> batch = tokens.subList(i, end);
+                StringBuilder addresses = new StringBuilder();
+                for (int j = 0; j < batch.size(); j++)
+                {
+                    if (j > 0) addresses.append(",");
+                    addresses.append(batch.get(j).getAddress().toLowerCase());
+                }
+                String url = COINGECKO_API.replace(CHAIN_IDS, apiChainName)
+                        .replace(CONTRACT_ADDR, addresses.toString())
+                        .replace(CURRENCY_TOKEN, currentCurrencySymbolTxt);
+
+                Request.Builder requestBuilder = new Request.Builder().url(url).get();
+                addAPIHeader(requestBuilder);
+
+                try (Response response = httpClient.newCall(requestBuilder.build()).execute())
+                {
+                    if (response.code() / 100 != 2 || response.body() == null) continue;
+
+                    JSONObject data = new JSONObject(response.body().string());
+                    for (TokenCardMeta tcm : batch)
                     {
-                        // update all the received tickers, tickers is an array of TokenTicker, how to convert this to a map?
-                        localSource.updateERC20Tickers(thisTCM.getChain(), tickers);
+                        String addr = tcm.getAddress().toLowerCase();
+                        if (data.has(addr))
+                        {
+                            JSONObject tickerData = data.getJSONObject(addr);
+                            TokenTicker tt = decodeCoinGeckoTicker(tickerData);
+                            tickersMap.put(addr, tt);
+                        }
                     }
-                }).isDisposed();
+                }
+                catch (Exception e)
+                {
+                    Timber.e(e);
+                }
+            }
+            return tickersMap;
+        });
     }
 
     private void checkPeggedTickers(long chainId, TokenTicker ticker)
@@ -476,36 +630,6 @@ public class TickerService
                     ethTickers.put(entry.getKey(), ticker);
                 }
             }
-        }
-    }
-
-    private void addToTokenTickers(BigInteger tickerInfo, long tickerTime)
-    {
-        try
-        {
-            byte[] tickerData = Numeric.toBytesPadded(tickerInfo, 32);
-            ByteArrayInputStream buffer = new ByteArrayInputStream(tickerData);
-            EthereumReadBuffer ds = new EthereumReadBuffer(buffer);
-
-            BigInteger chainId = ds.readBI(4);
-            int changeVal = ds.readInt();
-            BigInteger correctedPrice = ds.readBI(24);
-            ds.close();
-
-            BigDecimal changeValue = new BigDecimal(changeVal).movePointLeft(3);
-            BigDecimal priceValue = new BigDecimal(correctedPrice).movePointLeft(12);
-
-            double price = priceValue.doubleValue();
-
-            TokenTicker tTicker = new TokenTicker(String.valueOf(price * currentConversionRate),
-                    changeValue.setScale(3, RoundingMode.DOWN).toString(), currentCurrencySymbolTxt, "", tickerTime);
-
-            ethTickers.put(chainId.longValue(), tTicker);
-            checkPeggedTickers(chainId.longValue(), tTicker);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
         }
     }
 
@@ -549,7 +673,6 @@ public class TickerService
         }
         catch (Exception e)
         {
-            e.printStackTrace();
             tTicker = new TokenTicker();
         }
 
@@ -587,40 +710,6 @@ public class TickerService
 
             return rate;
         });
-    }
-
-    private String callSmartContractFunction(Web3j web3j, Function function, String contractAddress)
-    {
-        String encodedFunction = FunctionEncoder.encode(function);
-
-        try
-        {
-            org.web3j.protocol.core.methods.request.Transaction transaction
-                    = createEthCallTransaction(ZERO_ADDRESS, contractAddress, encodedFunction);
-            EthCall response = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
-
-            return response.getValue();
-        }
-        catch (IOException e)
-        {
-            //Connection error. Use cached value
-            return null;
-        }
-        catch (Exception e)
-        {
-            Timber.e(e);
-            return null;
-        }
-    }
-
-    private static Function getTickers()
-    {
-        return new Function(
-                "getTickers",
-                Arrays.asList(),
-                Collections.singletonList(new TypeReference<DynamicArray<Uint256>>()
-                {
-                }));
     }
 
     /**
@@ -716,10 +805,7 @@ public class TickerService
 
     private void resetTickerUpdate()
     {
-        //canUpdate.clear();
         ethTickers.clear();
-        tokenCheckQueue.clear();
-        dexGuruQuery.clear();
     }
 
     // Update this list from here: https://api.coingecko.com/api/v3/asset_platforms

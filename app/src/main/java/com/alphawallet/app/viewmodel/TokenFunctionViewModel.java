@@ -16,8 +16,6 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.GasEstimate;
 import com.alphawallet.app.entity.Operation;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
@@ -35,7 +33,6 @@ import com.alphawallet.app.interact.FetchTransactionsInteract;
 import com.alphawallet.app.interact.GenericWalletInteract;
 import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
-import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.AssetDefinitionService;
 import com.alphawallet.app.service.GasService;
 import com.alphawallet.app.service.KeyService;
@@ -149,7 +146,6 @@ public class TokenFunctionViewModel extends BaseViewModel implements Transaction
             GenericWalletInteract genericWalletInteract,
             OpenSeaService openseaService,
             FetchTransactionsInteract fetchTransactionsInteract,
-            AnalyticsServiceType analyticsService,
             PreferenceRepositoryType prefs)
     {
         this.assetDefinitionService = assetDefinitionService;
@@ -160,7 +156,6 @@ public class TokenFunctionViewModel extends BaseViewModel implements Transaction
         this.genericWalletInteract = genericWalletInteract;
         this.openseaService = openseaService;
         this.fetchTransactionsInteract = fetchTransactionsInteract;
-        setAnalyticsService(analyticsService);
         this.preferences = prefs;
     }
 
@@ -717,9 +712,6 @@ public class TokenFunctionViewModel extends BaseViewModel implements Transaction
 
     public void actionSheetConfirm(String mode)
     {
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        track(Analytics.Action.ACTION_SHEET_COMPLETED, props);
     }
 
     public Single<Intent> showTransferSelectCount(Context ctx, Token token, BigInteger tokenId)

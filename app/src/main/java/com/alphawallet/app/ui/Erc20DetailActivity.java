@@ -29,7 +29,6 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.alphawallet.app.BuildConfig;
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
 import com.alphawallet.app.entity.AddressMode;
 import com.alphawallet.app.entity.BuyCryptoInterface;
 import com.alphawallet.app.entity.StandardFunctionInterface;
@@ -525,7 +524,6 @@ public class Erc20DetailActivity extends BaseActivity implements StandardFunctio
     {
         Intent intent = viewModel.getBuyIntent(wallet.address, token);
         setResult(RESULT_OK, intent);
-        viewModel.track(Analytics.Action.BUY_WITH_RAMP);
         finish();
     }
 

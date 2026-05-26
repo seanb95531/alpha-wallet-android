@@ -43,6 +43,8 @@ public class KeyProviderJNIImpl implements KeyProvider
 
     public native String getUnstoppableDomainsKey();
 
+    public native String getAwApiKey();
+
     public native String getOkLinkKey();
 
     public native String getOkLBKey();

@@ -502,6 +502,21 @@ public class AWRealmMigration implements RealmMigration
 
             oldVersion = 54;
         }
+
+        if (oldVersion == 54)
+        {
+            RealmObjectSchema realmData = schema.get("RealmRPCEndpoint");
+            if (realmData == null)
+            {
+                schema.create("RealmRPCEndpoint")
+                        .addField("key", String.class, FieldAttribute.PRIMARY_KEY)
+                        .addField("chainId", long.class)
+                        .addField("url", String.class)
+                        .addField("rank", long.class)
+                        .addField("lastRPCCheck", long.class);
+            }
+            oldVersion = 55;
+        }
     }
 
     @Override

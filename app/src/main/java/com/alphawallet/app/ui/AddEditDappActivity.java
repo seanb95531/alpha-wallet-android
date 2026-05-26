@@ -11,8 +11,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.DApp;
 import com.alphawallet.app.util.DappBrowserUtils;
 import com.alphawallet.app.util.Utils;
@@ -116,7 +114,6 @@ public class AddEditDappActivity extends BaseActivity
     @Override
     protected void onResume()
     {
-        viewModel.track(mode == MODE_ADD ? Analytics.Navigation.ADD_DAPP : Analytics.Navigation.EDIT_DAPP);
         super.onResume();
     }
 
@@ -149,10 +146,6 @@ public class AddEditDappActivity extends BaseActivity
                 }
             }
             DappBrowserUtils.saveToPrefs(this, myDapps);
-
-            AnalyticsProperties props = new AnalyticsProperties();
-            props.put(Analytics.PROPS_URL, dapp.getUrl());
-            viewModel.track(Analytics.Action.DAPP_EDITED, props);
         }
         catch (Exception e)
         {
@@ -169,10 +162,6 @@ public class AddEditDappActivity extends BaseActivity
         List<DApp> myDapps = DappBrowserUtils.getMyDapps(this);
         myDapps.add(dapp);
         DappBrowserUtils.saveToPrefs(this, myDapps);
-
-        AnalyticsProperties props = new AnalyticsProperties();
-        props.put(Analytics.PROPS_URL, dapp.getUrl());
-        viewModel.track(Analytics.Action.DAPP_ADDED, props);
 
         finish();
     }

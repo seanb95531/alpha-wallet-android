@@ -71,12 +71,7 @@ public class Web3ViewClient extends WebViewClient {
         aDialog.setTitle(R.string.title_dialog_error);
         aDialog.setIcon(AWalletAlertDialog.ERROR);
         aDialog.setMessage(R.string.ssl_cert_invalid);
-        aDialog.setButtonText(R.string.dialog_approve);
-        aDialog.setButtonListener(v -> {
-            handler.proceed();
-            aDialog.dismiss();
-        });
-        aDialog.setSecondaryButtonText(R.string.action_cancel);
+        aDialog.setButtonText(R.string.action_cancel);
         aDialog.setButtonListener(v -> {
             handler.cancel();
             aDialog.dismiss();

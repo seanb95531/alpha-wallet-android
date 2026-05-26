@@ -21,8 +21,6 @@ import androidx.lifecycle.ViewModelProvider;
 import com.alphawallet.app.BuildConfig;
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.analytics.Analytics;
-import com.alphawallet.app.entity.AnalyticsProperties;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
 import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.entity.TransactionReturn;
@@ -80,7 +78,6 @@ public class TokenFunctionActivity extends BaseActivity implements StandardFunct
     private Realm realm = null;
     private RealmResults<RealmToken> realmTokenUpdates;
     private ActionSheetDialog confirmationDialog;
-    private AnalyticsProperties confirmationDialogProps;
 
     private void initViews(Token t) {
         token = t;
@@ -138,8 +135,6 @@ public class TokenFunctionActivity extends BaseActivity implements StandardFunct
         });
         dialog.show();
         confirmationDialog.dismiss();
-
-        viewModel.trackError(Analytics.Error.TOKEN_SCRIPT, txError.throwable.getMessage());
     }
 
     private void onWalletUpdate(Wallet w)
@@ -319,10 +314,6 @@ public class TokenFunctionActivity extends BaseActivity implements StandardFunct
             confirmationDialog.setURL("TokenScript");
             confirmationDialog.setCanceledOnTouchOutside(false);
             confirmationDialog.show();
-
-            confirmationDialogProps = new AnalyticsProperties();
-            confirmationDialogProps.put(Analytics.PROPS_ACTION_SHEET_SOURCE, ActionSheetSource.TOKENSCRIPT.getValue());
-            viewModel.track(Analytics.Navigation.ACTION_SHEET_FOR_TRANSACTION_CONFIRMATION, confirmationDialogProps);
         }
     }
 
@@ -358,8 +349,6 @@ public class TokenFunctionActivity extends BaseActivity implements StandardFunct
         dialog.setButtonText(R.string.button_ok);
         dialog.setButtonListener(v -> dialog.dismiss());
         dialog.show();
-
-        viewModel.trackError(Analytics.Error.TOKEN_SCRIPT, getString(R.string.error_insufficient_funds));
     }
 
     private void estimateError(final Web3Transaction w3tx)
@@ -465,19 +454,12 @@ public class TokenFunctionActivity extends BaseActivity implements StandardFunct
             setResult(RESULT_OK, intent);
             finish();
         }
-        else
-        {
-            viewModel.track(Analytics.Action.ACTION_SHEET_CANCELLED, confirmationDialogProps);
-        }
     }
 
     @Override
     public void notifyConfirm(String mode)
     {
         viewModel.actionSheetConfirm(mode);
-
-        confirmationDialogProps.put(Analytics.PROPS_ACTION_SHEET_MODE, mode);
-        viewModel.track(Analytics.Action.ACTION_SHEET_COMPLETED, confirmationDialogProps);
     }
 
     ActivityResultLauncher<Intent> getGasSettings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),

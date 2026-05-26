@@ -33,7 +33,6 @@ import com.alphawallet.app.router.RedeemSignatureDisplayRouter;
 import com.alphawallet.app.router.SellDetailRouter;
 import com.alphawallet.app.router.TokenDetailRouter;
 import com.alphawallet.app.router.TransferTicketDetailRouter;
-import com.alphawallet.app.service.AnalyticsServiceType;
 
 import dagger.Module;
 import dagger.Provides;
@@ -91,9 +90,8 @@ public class ViewModelModule {
     }
 
     @Provides
-    CreateTransactionInteract provideCreateTransactionInteract(TransactionRepositoryType transactionRepository,
-                                                               AnalyticsServiceType analyticsService) {
-        return new CreateTransactionInteract(transactionRepository, analyticsService);
+    CreateTransactionInteract provideCreateTransactionInteract(TransactionRepositoryType transactionRepository) {
+        return new CreateTransactionInteract(transactionRepository);
     }
 
     @Provides
