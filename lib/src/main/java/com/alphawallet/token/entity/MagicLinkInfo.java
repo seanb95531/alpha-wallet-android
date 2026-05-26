@@ -4,7 +4,6 @@ import com.alphawallet.ethereum.EthereumNetworkBase;
 import com.alphawallet.ethereum.NetworkInfo;
 
 import static com.alphawallet.ethereum.EthereumNetworkBase.CLASSIC_ID;
-import static com.alphawallet.ethereum.EthereumNetworkBase.GOERLI_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.MAINNET_ID;
 import static com.alphawallet.ethereum.EthereumNetworkBase.GNOSIS_ID;
 
@@ -20,7 +19,6 @@ public class MagicLinkInfo
     private static final String classicMagicLinkDomain = "classic.aw.app";
     private static final String callistoMagicLinkDomain = "callisto.aw.app";
     private static final String xDaiMagicLinkDomain = "xdai.aw.app";
-    private static final String goerliMagicLinkDomain = "goerli.aw.app";
     private static final String customMagicLinkDomain = "custom.aw.app";
 
     //Etherscan domains
@@ -28,7 +26,6 @@ public class MagicLinkInfo
     private static final String classicEtherscan = "https://blockscout.com/etc/mainnet/";
     private static final String callistoEtherscan = "https://etherscan.io/"; //TODO: determine callisto etherscan
     private static final String xDaiEtherscan = "https://blockscout.com/poa/dai/";
-    private static final String goerliEtherscan = "https://goerli.etherscan.io/";
 
     public static String getNetworkNameById(long networkId) {
         NetworkInfo info = EthereumNetworkBase.getNetworkByChain(networkId);
@@ -53,8 +50,6 @@ public class MagicLinkInfo
                 return classicMagicLinkDomain;
             case (int) GNOSIS_ID:
                 return xDaiMagicLinkDomain;
-            case (int)GOERLI_ID:
-                return goerliMagicLinkDomain;
         }
     }
 
@@ -71,23 +66,6 @@ public class MagicLinkInfo
                 return CLASSIC_ID;
             case xDaiMagicLinkDomain:
                 return GNOSIS_ID;
-            case goerliMagicLinkDomain:
-                return GOERLI_ID;
-        }
-    }
-
-    //TODO: Refactor to use the centralised source
-    public static String getEtherscanURLbyNetwork(long networkId) {
-        switch ((int)networkId) {
-            case (int)MAINNET_ID:
-            default:
-                return mainNetEtherscan;
-            case (int)CLASSIC_ID:
-                return classicEtherscan;
-            case (int) GNOSIS_ID:
-                return xDaiEtherscan;
-            case (int)GOERLI_ID:
-                return goerliEtherscan;
         }
     }
 

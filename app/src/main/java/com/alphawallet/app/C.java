@@ -24,7 +24,6 @@ public abstract class C {
     public static final String ETHEREUM_NETWORK_NAME = "Ethereum";
     public static final String CLASSIC_NETWORK_NAME = "Ethereum Classic";
     public static final String XDAI_NETWORK_NAME = "Gnosis";
-    public static final String GOERLI_NETWORK_NAME = "Görli (Test)";
     public static final String BINANCE_TEST_NETWORK = "BSC TestNet";
     public static final String BINANCE_MAIN_NETWORK = "Binance (BSC)";
     public static final String FANTOM_NETWORK = "Fantom Opera";
@@ -77,7 +76,6 @@ public abstract class C {
     public static final String MANTLE_SYMBOL = "MNT";
     public static final String xDAI_SYMBOL = "xDai";
     public static final String ETC_SYMBOL = "ETC";
-    public static final String GOERLI_SYMBOL = "GÖETH";
     public static final String BINANCE_SYMBOL = "BNB";
     public static final String FANTOM_SYMBOL = "FTM";
     public static final String AVALANCHE_SYMBOL = "AVAX";

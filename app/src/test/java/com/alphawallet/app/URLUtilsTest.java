@@ -27,7 +27,6 @@ public class URLUtilsTest
                 EthereumNetworkBase.ARBITRUM_RPC_URL,
                 EthereumNetworkBase.AURORA_MAINNET_RPC_URL,
                 EthereumNetworkBase.IOTEX_MAINNET_RPC_URL,
-                EthereumNetworkBase.GOERLI_RPC_URL,
                 EthereumNetworkBase.MAINNET_RPC_URL
         };
 
