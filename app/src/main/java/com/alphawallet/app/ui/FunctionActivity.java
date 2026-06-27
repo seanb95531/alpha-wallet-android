@@ -201,7 +201,7 @@ public class FunctionActivity extends BaseActivity implements FunctionCallback,
 
             if (TextUtils.isEmpty(Objects.requireNonNull(action).view.getUrl()))
             {
-                String tsCode = tokenView.injectJSAtScriptEnd(action.view.getTokenView(), listener);
+                String tsCode = tokenView.injectJSAtScriptEnd(action.view.getTokenView(), "");
                 System.out.println(tsCode);
                 String injectedView = tokenView.injectWeb3TokenInit(tsCode, tokenAttrs, tokenId);
                 injectedView = tokenView.injectJSAtEnd(injectedView, magicValues);
