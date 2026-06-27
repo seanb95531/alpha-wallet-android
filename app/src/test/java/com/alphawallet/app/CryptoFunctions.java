@@ -12,7 +12,6 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Base64;
 
-import wallet.core.jni.Hash;
 
 public class CryptoFunctions implements CryptoFunctionsInterface
 {
@@ -45,7 +44,7 @@ public class CryptoFunctions implements CryptoFunctionsInterface
     @Override
     public byte[] keccak256(byte[] message)
     {
-        return Hash.keccak256(message);
+        return org.web3j.crypto.Hash.sha3(message);
     }
 
     @Override

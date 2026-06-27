@@ -197,13 +197,11 @@ public class FunctionActivity extends BaseActivity implements FunctionCallback,
         {
             setupAction();
             String magicValues = viewModel.getAssetDefinitionService().getMagicValuesForInjection(token.tokenInfo.chainId);
-            String listener = loadFile(this, R.raw.listener); //Listener Stub TODO: hook up TX listener
 
             if (TextUtils.isEmpty(Objects.requireNonNull(action).view.getUrl()))
             {
-                String tsCode = tokenView.injectJSAtScriptEnd(action.view.getTokenView(), "");
-                System.out.println(tsCode);
-                String injectedView = tokenView.injectWeb3TokenInit(tsCode, tokenAttrs, tokenId);
+                //String tsCode = tokenView.injectJSAtScriptEnd(, "");
+                String injectedView = tokenView.injectWeb3TokenInit(action.view.getTokenView(), tokenAttrs, tokenId);
                 injectedView = tokenView.injectJSAtEnd(injectedView, magicValues);
                 injectedView = tokenView.injectStyleAndWrapper(injectedView, action.style + "\n" + action.view.getStyle());
 

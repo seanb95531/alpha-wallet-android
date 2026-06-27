@@ -128,7 +128,6 @@ import io.realm.Sort;
 import io.realm.exceptions.RealmException;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 import timber.log.Timber;
-import wallet.core.jni.Hash;
 
 
 /**
@@ -1354,7 +1353,7 @@ public class AssetDefinitionService implements ParseResult, AttributeInterface
             }
 
             //store this TokenScript with the correct CollectionId
-            tempFileKey = Numeric.toHexString(Hash.keccak256(preHash)) + "-" + token.tokenInfo.chainId + TS_EXTENSION;
+            tempFileKey = Numeric.toHexString(org.web3j.crypto.Hash.sha3(preHash)) + "-" + token.tokenInfo.chainId + TS_EXTENSION;
             File updatedFile = new File(context.getFilesDir(), tempFileKey);
             tempStoreFile.renameTo(updatedFile);
             tsf = new TokenScriptFile(context, updatedFile.getAbsolutePath());
@@ -2952,7 +2951,7 @@ public class AssetDefinitionService implements ParseResult, AttributeInterface
         }
 
         byte[] preHash = td.getAttestation().getCollectionIdPreHash();
-        String scriptCollectionId = Numeric.toHexString(Hash.keccak256(preHash));
+        String scriptCollectionId = Numeric.toHexString(org.web3j.crypto.Hash.sha3(preHash));
         Wallet wallet = new Wallet(tokensService.getCurrentAddress());
         int updateSize;
 

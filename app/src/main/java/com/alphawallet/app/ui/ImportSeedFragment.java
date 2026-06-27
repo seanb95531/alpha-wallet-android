@@ -24,8 +24,11 @@ import com.alphawallet.app.viewmodel.PasswordPhraseCounter;
 import com.alphawallet.app.widget.PasswordInputView;
 import com.google.common.collect.Collections2;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -36,6 +39,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class ImportSeedFragment extends ImportFragment implements OnSuggestionClickListener {
     private static final OnImportSeedListener dummyOnImportSeedListener = (s, c) -> {};
+    private static final String WORD_LIST_FILE = "en-mnemonic-word-list.txt";
 
     public static final String validator = "[^a-z^A-Z^ ]";
 
@@ -92,9 +96,40 @@ public class ImportSeedFragment extends ImportFragment implements OnSuggestionCl
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
         listSuggestions.setLayoutManager(linearLayoutManager);
 
-        suggestions = Arrays.asList(getResources().getStringArray(R.array.bip39_english));
+        suggestions = loadMnemonicSuggestions();
         suggestionsAdapter = new SuggestionsAdapter(suggestions, this);
         listSuggestions.setAdapter(suggestionsAdapter);
+    }
+
+    private List<String> loadMnemonicSuggestions()
+    {
+        List<String> words = new ArrayList<>();
+        ClassLoader classLoader = ImportSeedFragment.class.getClassLoader();
+        if (classLoader == null) return words;
+
+        try (InputStream inputStream = classLoader.getResourceAsStream(WORD_LIST_FILE))
+        {
+            if (inputStream == null) return words;
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)))
+            {
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    String word = line.trim();
+                    if (!word.isEmpty())
+                    {
+                        words.add(word);
+                    }
+                }
+            }
+        }
+        catch (Exception ignored)
+        {
+            // Suggestions are optional; keep import usable if this resource is unavailable.
+        }
+
+        return words;
     }
 
     private void setHintState(boolean enabled){

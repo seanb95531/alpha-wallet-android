@@ -49,7 +49,10 @@ import com.alphawallet.hardware.HardwareDevice;
 import com.alphawallet.hardware.SignatureFromKey;
 import com.alphawallet.hardware.SignatureReturnType;
 
+import org.web3j.crypto.Bip32ECKeyPair;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.MnemonicUtils;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
 
@@ -81,12 +84,6 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
 import timber.log.Timber;
-import wallet.core.jni.CoinType;
-import wallet.core.jni.Curve;
-import wallet.core.jni.HDWallet;
-import wallet.core.jni.Hash;
-import wallet.core.jni.Mnemonic;
-import wallet.core.jni.PrivateKey;
 
 public class KeyService implements AuthenticationCallback, PinAuthenticationCallbackInterface, HardwareCallback
 {
@@ -132,6 +129,13 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
     }
 
     private static final int DEFAULT_KEY_STRENGTH = 128;
+    private static final int[] ETH_DERIVATION_PATH = {
+            44 | Bip32ECKeyPair.HARDENED_BIT,
+            60 | Bip32ECKeyPair.HARDENED_BIT,
+            0 | Bip32ECKeyPair.HARDENED_BIT,
+            0,
+            0
+    };
     private final Context context;
     private Activity activity;
 
@@ -157,7 +161,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
 
     public KeyService(Context ctx)
     {
-        System.loadLibrary("TrustWalletCore");
         this.context = ctx;
         this.hardwareDevice = new HardwareDevice(this);
         checkSecurity();
@@ -236,14 +239,13 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         importCallback = callback;
 
         //cursory check for valid key import
-        if (!Mnemonic.isValid(seedPhrase))
+        if (!MnemonicUtils.validateMnemonic(seedPhrase))
         {
             callback.walletValidated(null, KeyEncodingType.SEED_PHRASE_KEY, AuthenticationLevel.NOT_SET);
         }
         else
         {
-            HDWallet newWallet = new HDWallet(seedPhrase, "");
-            storeHDKey(newWallet, false); //store encrypted bytes in case of re-entry
+            storeHDKey(seedPhrase, false); //store encrypted bytes in case of re-entry
             checkAuthentication(IMPORT_HD_KEY);
         }
     }
@@ -395,10 +397,10 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
                 try
                 {
                     String mnemonic = unpackMnemonic();
-                    HDWallet newWallet = new HDWallet(mnemonic, "");
-                    PrivateKey pk = newWallet.getKeyForCoin(CoinType.ETHEREUM);
-                    byte[] digest = Hash.keccak256(TBSdata);
-                    returnSig.signature = pk.sign(digest, Curve.SECP256K1);
+                    ECKeyPair keyPair = deriveEthereumKeyPairFromMnemonic(mnemonic);
+                    byte[] digest = org.web3j.crypto.Hash.sha3(TBSdata);
+                    Sign.SignatureData signature = Sign.signMessage(digest, keyPair, false);
+                    returnSig.signature = bytesFromSignature(signature);
                     returnSig.sigType = SignatureReturnType.SIGNATURE_GENERATED;
                 }
                 catch (KeyServiceException | UserNotAuthenticatedException e)
@@ -592,8 +594,8 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
 
     private void createHDKey()
     {
-        HDWallet newWallet = new HDWallet(DEFAULT_KEY_STRENGTH, "");
-        boolean success = storeHDKey(newWallet, false); //create non-authenticated key initially
+        String mnemonic = generateMnemonic();
+        boolean success = storeHDKey(mnemonic, false); //create non-authenticated key initially
         if (callbackInterface != null)
             callbackInterface.HDKeyCreated(success ? currentWallet.address : null, context, authLevel);
     }
@@ -609,8 +611,7 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         try
         {
             String seedPhrase = unpackMnemonic();
-            HDWallet newWallet = new HDWallet(seedPhrase, "");
-            boolean success = storeHDKey(newWallet, requiresAuthentication);
+            boolean success = storeHDKey(seedPhrase, requiresAuthentication);
             String reportAddress = success ? currentWallet.address : null;
             importCallback.walletValidated(reportAddress, KeyEncodingType.SEED_PHRASE_KEY, authLevel);
         }
@@ -671,12 +672,27 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         }
     }
 
-    private synchronized boolean storeHDKey(HDWallet newWallet, boolean keyRequiresAuthentication)
+    private synchronized boolean storeHDKey(String mnemonic, boolean keyRequiresAuthentication)
     {
-        PrivateKey pk = newWallet.getKeyForCoin(CoinType.ETHEREUM);
-        currentWallet = new Wallet(CoinType.ETHEREUM.deriveAddress(pk));
+        ECKeyPair keyPair = deriveEthereumKeyPairFromMnemonic(mnemonic);
+        String address = Numeric.prependHexPrefix(org.web3j.crypto.Keys.getAddress(keyPair));
+        currentWallet = new Wallet(address);
 
-        return storeEncryptedBytes(newWallet.mnemonic().getBytes(), keyRequiresAuthentication, currentWallet.address);
+        return storeEncryptedBytes(mnemonic.getBytes(), keyRequiresAuthentication, currentWallet.address);
+    }
+
+    private String generateMnemonic()
+    {
+        byte[] entropy = new byte[DEFAULT_KEY_STRENGTH / 8];
+        new SecureRandom().nextBytes(entropy);
+        return MnemonicUtils.generateMnemonic(entropy);
+    }
+
+    private ECKeyPair deriveEthereumKeyPairFromMnemonic(String mnemonic)
+    {
+        byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
+        Bip32ECKeyPair master = Bip32ECKeyPair.generateKeyPair(seed);
+        return Bip32ECKeyPair.deriveKeyPair(master, ETH_DERIVATION_PATH);
     }
 
     private synchronized boolean storeEncryptedBytes(byte[] data, boolean createAuthLocked, String fileName)

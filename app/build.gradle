@@ -140,7 +140,7 @@ android {
             useLegacyPackaging true
         }
         resources {
-            excludes += ['META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/LICENSE.md', 'META-INF/NOTICE.md', 'META-INF/LICENSE-notice.md', 'solidity/ens/build/*.bin', 'solidity/ens/*.sol', 'solidity/ens/build/*.abi', 'en-mnemonic-word-list.txt', 'solidity/*', 'META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+            excludes += ['META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/LICENSE.md', 'META-INF/NOTICE.md', 'META-INF/LICENSE-notice.md', 'solidity/ens/build/*.bin', 'solidity/ens/*.sol', 'solidity/ens/build/*.abi', 'solidity/*', 'META-INF/versions/9/OSGI-INF/MANIFEST.MF']
         }
     }
     compileOptions {
@@ -258,7 +258,6 @@ dependencies {
     implementation libs.glide
     annotationProcessor libs.compiler
     implementation libs.guava
-    implementation libs.wallet.core
     //noinspection UseTomlInstead
     implementation 'com.github.florent37:TutoShowcase:d8b91be8a2'
     implementation libs.flexbox.layout

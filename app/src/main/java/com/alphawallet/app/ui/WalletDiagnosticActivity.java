@@ -34,6 +34,8 @@ import com.alphawallet.app.widget.CopyTextView;
 import com.alphawallet.app.widget.FunctionButtonBar;
 import com.alphawallet.app.widget.SignTransactionDialog;
 
+import org.web3j.crypto.Bip32ECKeyPair;
+import org.web3j.crypto.MnemonicUtils;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.utils.Numeric;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,7 +45,6 @@ import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletFile;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -53,9 +54,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
-import wallet.core.jni.CoinType;
-import wallet.core.jni.HDWallet;
-import wallet.core.jni.PrivateKey;
 
 /**
  * Created by JB on 24/08/2022.
@@ -65,6 +63,14 @@ import wallet.core.jni.PrivateKey;
 @AndroidEntryPoint
 public class WalletDiagnosticActivity extends BaseActivity implements StandardFunctionInterface
 {
+    private static final int[] ETH_DERIVATION_PATH = {
+            44 | Bip32ECKeyPair.HARDENED_BIT,
+            60 | Bip32ECKeyPair.HARDENED_BIT,
+            0 | Bip32ECKeyPair.HARDENED_BIT,
+            0,
+            0
+    };
+
     private BackupKeyViewModel viewModel;
     private AWalletAlertDialog dialog;
 
@@ -382,16 +388,19 @@ public class WalletDiagnosticActivity extends BaseActivity implements StandardFu
 
             if (wordCount == 12 || wordCount == 18 || wordCount == 24)
             {
-                //is valid seed phrase
-                HDWallet newWallet = new HDWallet(keyData, "");
-                PrivateKey pk = newWallet.getKeyForCoin(CoinType.ETHEREUM);
+                if (!MnemonicUtils.validateMnemonic(keyData))
+                {
+                    return false;
+                }
+
+                ECKeyPair keyPair = deriveEthereumKeyPairFromMnemonic(keyData);
                 status.setText(R.string.seed_phrase_public_key);
                 status.setTextColor(getColor(R.color.green));
-                pubKeyText.setText(Numeric.toHexString(pk.getPublicKeySecp256k1(false).data()));
+                pubKeyText.setText("0x" + Numeric.toHexStringNoPrefixZeroPadded(keyPair.getPublicKey(), 128));
 
                 CopyTextView pkView = findViewById(R.id.copy_pk);
                 pkView.setVisibility(View.VISIBLE);
-                String pkStr = (new BigInteger(1, pk.data())).toString(16);
+                String pkStr = keyPair.getPrivateKey().toString(16);
                 pkView.setFixedText(pkStr);
                 isSeedPhrase = true;
                 return true;
@@ -478,9 +487,7 @@ public class WalletDiagnosticActivity extends BaseActivity implements StandardFu
     @SuppressWarnings("unused")
     private String dumpKeystoreFromSeedPhrase(String seedPhrase, String keystorePassword)
     {
-        HDWallet newWallet = new HDWallet(seedPhrase, "");
-        PrivateKey pk = newWallet.getKeyForCoin(CoinType.ETHEREUM);
-        ECKeyPair keyPair = ECKeyPair.create(pk.data());
+        ECKeyPair keyPair = deriveEthereumKeyPairFromMnemonic(seedPhrase);
 
         try
         {
@@ -493,6 +500,13 @@ public class WalletDiagnosticActivity extends BaseActivity implements StandardFu
         }
 
         return "";
+    }
+
+    private ECKeyPair deriveEthereumKeyPairFromMnemonic(String mnemonic)
+    {
+        byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
+        Bip32ECKeyPair master = Bip32ECKeyPair.generateKeyPair(seed);
+        return Bip32ECKeyPair.deriveKeyPair(master, ETH_DERIVATION_PATH);
     }
 
     private void showError(String error)

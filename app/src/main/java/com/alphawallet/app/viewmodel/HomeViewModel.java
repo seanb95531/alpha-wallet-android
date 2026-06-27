@@ -90,7 +90,6 @@ import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import timber.log.Timber;
-import wallet.core.jni.Hash;
 
 @HiltViewModel
 public class HomeViewModel extends BaseViewModel
@@ -661,7 +660,7 @@ public class HomeViewModel extends BaseViewModel
             byte[] preHash = td.getAttestationCollectionPreHash();
             if (preHash != null)
             {
-                newFileName = Numeric.toHexString(Hash.keccak256(preHash))
+                newFileName = Numeric.toHexString(org.web3j.crypto.Hash.sha3(preHash))
                         + "-" + info.addresses.keySet().iterator().next();
             }
             else

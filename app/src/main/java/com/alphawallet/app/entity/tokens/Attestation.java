@@ -43,7 +43,6 @@ import java.util.Map;
 
 import io.reactivex.Single;
 import timber.log.Timber;
-import wallet.core.jni.Hash;
 
 /**
  * Created by JB on 23/02/2023.
@@ -214,7 +213,7 @@ public class Attestation extends Token
             identifier.append(m.getValue().getString());
         }
 
-        return Numeric.toHexStringNoPrefix(Hash.keccak256(identifier.toString().getBytes(StandardCharsets.UTF_8)));
+        return Numeric.toHexStringNoPrefix(org.web3j.crypto.Hash.sha3(identifier.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
     private String getIdFieldValues(TokenDefinition td)
@@ -279,7 +278,7 @@ public class Attestation extends Token
         String idFields = getIdFieldValues(td);
         String identifierPreHash = tokenInfo.chainId + Numeric.cleanHexPrefix(collectionId) + idFields;
         byte[] identifierBytes = identifierPreHash.getBytes(StandardCharsets.UTF_8);
-        byte[] hash = Hash.keccak256(identifierBytes);
+        byte[] hash = org.web3j.crypto.Hash.sha3(identifierBytes);
         return Numeric.toHexString(hash);
     }
 
@@ -298,7 +297,7 @@ public class Attestation extends Token
 
         String collectionStr = collectionPrefix + collectionIdStr;
         byte[] collectionBytes = collectionStr.getBytes(StandardCharsets.UTF_8);;
-        byte[] hash = Hash.keccak256(collectionBytes);
+        byte[] hash = org.web3j.crypto.Hash.sha3(collectionBytes);
         return Numeric.toHexString(hash);
     }
 
@@ -310,7 +309,7 @@ public class Attestation extends Token
         // produce generic UID for Attestation by using attn schema elements
         String collectionStr = getCollectionPrefix() + getFieldDataJoin(getAttestationAttributeKeys());
         byte[] collectionBytes = collectionStr.getBytes(StandardCharsets.UTF_8);;
-        byte[] hash = Hash.keccak256(collectionBytes);
+        byte[] hash = org.web3j.crypto.Hash.sha3(collectionBytes);
         return Numeric.toHexString(hash);
     }
 
@@ -971,7 +970,7 @@ public class Attestation extends Token
     {
         if (isEAS())
         {
-            byte[] hash = Hash.keccak256(Numeric.hexStringToByteArray(getEasAttestation().data));
+            byte[] hash = org.web3j.crypto.Hash.sha3(Numeric.hexStringToByteArray(getEasAttestation().data));
             return Numeric.toBigInt(hash);
         }
         else
